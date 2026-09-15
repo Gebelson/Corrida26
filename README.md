@@ -2,7 +2,7 @@
 
 Aplicação de corrida por pontos simbólicos: Next.js, React, TypeScript, Tailwind, Framer Motion e PostgreSQL. O confronto principal vem sempre das duas primeiras posições calculadas pelo servidor. O projeto inclui interface, rotas de API, autenticação, administração, banco persistente, ledger imutável, adapter Pix e testes de integração.
 
-**Estado da entrega:** funciona localmente em sandbox com banco PostgreSQL embarcado persistente (PGlite). A confirmação de pagamento nesse ambiente é explicitamente simulada pelo servidor, sem cobrança. Produção exige configurar Supabase/PostgreSQL, Google/e-mail, credenciais Mercado Pago, domínio HTTPS e realizar a homologação externa; essas contas e credenciais não acompanham o projeto. Não há fallback de produção para dados de demonstração.
+**Estado da entrega:** funciona localmente em sandbox com banco PostgreSQL embarcado persistente (PGlite). A confirmação de pagamento nesse ambiente é explicitamente simulada pelo servidor, sem cobrança. Antes das credenciais de produção serem conectadas, o deploy público exibe o placar completo em modo de apresentação somente para leitura e mantém participações bloqueadas. Produção transacional exige configurar Supabase/PostgreSQL, Google/e-mail, credenciais Mercado Pago, domínio HTTPS e realizar a homologação externa; essas contas e credenciais não acompanham o projeto.
 
 ## Executar localmente
 

@@ -10,6 +10,8 @@ import {
   adminOperation,
   getHistory,
   adminDashboard,
+  getPresentationBoard,
+  getPresentationHistory,
 } from "../src/server/game";
 import { validateWebhook, verifyPayment } from "../src/server/payments";
 import {
@@ -50,6 +52,24 @@ const anon: SessionUser = {
   anonymous: true,
   admin: false,
 };
+
+test("public presentation remains complete before production services are connected", () => {
+  const now = new Date("2026-09-15T12:00:00.000Z");
+  const board = getPresentationBoard(now);
+  assert.equal(board.readOnly, true);
+  assert.equal(board.settings.paymentsEnabled, false);
+  assert.deepEqual(
+    board.candidates
+      .slice(0, 3)
+      .map((candidate) => [candidate.id, candidate.points]),
+    [
+      ["lula", 125336],
+      ["flavio", 117200],
+      ["renan", 115950],
+    ],
+  );
+  assert.equal(getPresentationHistory(now).points[0].scores.lula, 125336);
+});
 before(async () => {
   db = await createLocalDatabase();
   (

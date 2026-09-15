@@ -47,6 +47,8 @@ export interface Board {
   settings: Settings;
   updatedAt: string;
   mode: "sandbox" | "production";
+  /** Public presentation data shown while production services are not connected. */
+  readOnly?: boolean;
 }
 export interface Transaction {
   id: string;

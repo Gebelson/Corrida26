@@ -16,6 +16,8 @@ export interface Database extends Queryable {
 }
 export const mode = (): "sandbox" | "production" =>
   process.env.APP_MODE === "sandbox" ? "sandbox" : "production";
+export const databaseConfigured = () =>
+  mode() === "sandbox" || Boolean(process.env.DATABASE_URL?.trim());
 export const defaults: Settings = {
   minAmount: 5,
   quickAmounts: [5, 10, 20],

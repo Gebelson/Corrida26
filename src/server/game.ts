@@ -8,10 +8,64 @@ import type {
   SessionUser,
   HistoryPoint,
 } from "../lib/types";
-import { getDB, mode, type Database, type Queryable } from "./db";
+import {
+  defaults,
+  demoCandidates,
+  getDB,
+  mode,
+  type Database,
+  type Queryable,
+} from "./db";
 import { ApiError } from "./security";
 
 const timestamp = (value: unknown) => new Date(value as string).toISOString();
+export function getPresentationBoard(now = new Date()): Board {
+  const total = demoCandidates.reduce(
+    (sum, candidate) => sum + candidate[4],
+    0,
+  );
+  const leader = demoCandidates[0][4];
+  const second = demoCandidates[1][4];
+  const candidates: Candidate[] = demoCandidates.map(
+    ([id, name, shortName, color, points], index) => ({
+      id,
+      name,
+      shortName,
+      color,
+      avatar: `/runners.webp#${index}`,
+      points,
+      position: index + 1,
+      active: true,
+      gapToLeader: Math.max(0, leader - points),
+      gapToTop2: index < 2 ? 0 : Math.max(1, second - points + 1),
+      percentage: total ? (points / total) * 100 : 0,
+    }),
+  );
+  return {
+    candidates,
+    movements: [],
+    events: [],
+    settings: { ...defaults, paymentsEnabled: false },
+    updatedAt: now.toISOString(),
+    mode: "production",
+    readOnly: true,
+  };
+}
+
+export function getPresentationHistory(now = new Date()) {
+  const board = getPresentationBoard(now);
+  return {
+    points: [
+      {
+        timestamp: now.toISOString(),
+        scores: Object.fromEntries(
+          board.candidates.map((candidate) => [candidate.id, candidate.points]),
+        ),
+      },
+    ],
+    events: [],
+  };
+}
 export async function getSettings(db: Queryable): Promise<Settings> {
   const result = await db.query("SELECT value FROM site_settings WHERE id=1");
   if (!result.rows[0])
@@ -79,6 +133,7 @@ export async function getBoard(db?: Queryable): Promise<Board> {
     settings: await getSettings(db),
     updatedAt: new Date().toISOString(),
     mode: mode(),
+    readOnly: false,
   };
 }
 export function publicTransaction(row: Record<string, unknown>): Transaction {

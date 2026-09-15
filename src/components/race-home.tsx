@@ -461,9 +461,11 @@ export function Home() {
       </section>
       <div className="payment-caption">
         <ShieldCheck size={13} />
-        {board.mode === "sandbox"
-          ? "Experimente o fluxo completo no modo demonstração. Nenhum valor será cobrado."
-          : "Pagamento via Pix. O placar muda após a confirmação do pagamento."}
+        {board.readOnly
+          ? "Placar disponível para visualização. Participações serão liberadas após a conexão segura dos serviços."
+          : board.mode === "sandbox"
+            ? "Experimente o fluxo completo no modo demonstração. Nenhum valor será cobrado."
+            : "Pagamento via Pix. O placar muda após a confirmação do pagamento."}
       </div>
       <Status first={first} second={second} />
       <section className="challengers-section">

@@ -293,7 +293,9 @@ export function CheckoutModal({
               )}
               {!board?.settings.paymentsEnabled && (
                 <p className="inline-notice">
-                  As participações estão temporariamente pausadas.
+                  {board?.readOnly
+                    ? "As participações serão liberadas após a conexão segura do banco e do gateway Pix."
+                    : "As participações estão temporariamente pausadas."}
                 </p>
               )}
               <p className="modal-legal">

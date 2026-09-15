@@ -58,12 +58,18 @@ export function Header() {
       <div className="system-bar">
         <span>
           <span className={`live-dot ${error ? "offline" : ""}`} />
-          {error ? "Reconectando ao placar" : "PLACAR COMPARTILHADO"}
+          {error
+            ? "Reconectando ao placar"
+            : board?.readOnly
+              ? "PRÉVIA DO PLACAR"
+              : "PLACAR COMPARTILHADO"}
         </span>
         <span>
-          {board?.mode === "sandbox"
-            ? "MODO DEMONSTRAÇÃO · SEM COBRANÇAS"
-            : "PONTOS SIMBÓLICOS · PARÓDIA"}
+          {board?.readOnly
+            ? "SERVIÇOS EM CONFIGURAÇÃO"
+            : board?.mode === "sandbox"
+              ? "MODO DEMONSTRAÇÃO · SEM COBRANÇAS"
+              : "PONTOS SIMBÓLICOS · PARÓDIA"}
         </span>
         <Link href="/regras">
           Entenda o jogo <ArrowUpRight size={12} />
