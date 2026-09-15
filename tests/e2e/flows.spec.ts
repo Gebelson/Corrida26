@@ -4,17 +4,12 @@ test("placar, rotas e layout carregam corretamente", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".hero h1")).toContainText("X");
   await expect(page.locator(".score-side strong").first()).toBeVisible();
-  const runners = page.locator(".runner-frames");
+  const runners = page.locator(".runner-canvas");
   await expect(runners).toHaveCount(2);
-  const firstFrame = await runners
-    .first()
-    .evaluate((element) => getComputedStyle(element).backgroundPosition);
+  await expect(runners.first()).toHaveAttribute("data-frame", /\d/);
+  const firstFrame = await runners.first().getAttribute("data-frame");
   await expect
-    .poll(() =>
-      runners
-        .first()
-        .evaluate((element) => getComputedStyle(element).backgroundPosition),
-    )
+    .poll(() => runners.first().getAttribute("data-frame"))
     .not.toBe(firstFrame);
   await expect(
     page.getByText(/Paródia\. Pontos simbólicos internos/i),

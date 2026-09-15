@@ -22,25 +22,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useRace } from "./race-provider";
+import { RunnerCanvas, runnerTilesets } from "./runner-canvas";
 import { Candidate, number, money } from "@/lib/types";
-
-const runnerSheets: Record<string, string> = {
-  lula: "/runners/lula.webp",
-  flavio: "/runners/flavio.webp",
-  renan: "/runners/renan.webp",
-  augusto: "/runners/augusto.webp",
-  caiado: "/runners/caiado.webp",
-  zema: "/runners/zema.webp",
-};
-
-const runnerPhases: Record<string, number> = {
-  lula: 0,
-  flavio: 0.25,
-  renan: 0.5,
-  augusto: 0.125,
-  caiado: 0.375,
-  zema: 0.625,
-};
 export function Counter({ value }: { value: number }) {
   const [display, setDisplay] = useState(value);
   const previous = useRef(value);
@@ -72,18 +55,9 @@ export function Avatar({
   candidate: Candidate;
   runner?: boolean;
 }) {
-  const runnerSheet = runner ? runnerSheets[candidate.id] : undefined;
-  if (runnerSheet)
+  if (runner && runnerTilesets[candidate.id])
     return (
-      <span
-        role="img"
-        aria-label={`Caricatura animada de ${candidate.name} correndo`}
-        className="runner-sprite runner-frames"
-        style={{
-          backgroundImage: `url(${runnerSheet})`,
-          animationDelay: `-${runnerPhases[candidate.id] ?? 0}s`,
-        }}
-      />
+      <RunnerCanvas candidateId={candidate.id} candidateName={candidate.name} />
     );
   const match = candidate.avatar?.match(/#(\d+)$/);
   const index = match

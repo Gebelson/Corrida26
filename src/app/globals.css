@@ -587,13 +587,15 @@ svg {
   filter: drop-shadow(0 0 15px rgba(var(--accent-rgb), 0.22));
   z-index: 1;
 }
-.runner-sprite.runner-frames {
+.runner-canvas {
+  display: block;
+  position: absolute;
+  bottom: 6px;
   left: 12.8%;
   width: 74.4%;
-  background-size: 800% 100%;
-  background-position: 0 0;
-  animation: runner-cycle 0.67s steps(7, end) infinite;
-  will-change: background-position;
+  height: 100%;
+  filter: drop-shadow(0 0 15px rgba(var(--accent-rgb), 0.22));
+  z-index: 1;
 }
 .speed-lines {
   position: absolute;
@@ -1608,11 +1610,6 @@ svg {
   }
   to {
     transform: translateY(-3px) rotate(0.5deg);
-  }
-}
-@keyframes runner-cycle {
-  to {
-    background-position: 100% 0;
   }
 }
 @media (min-width: 1440px) {
