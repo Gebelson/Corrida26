@@ -6,6 +6,12 @@ test("placar, rotas e layout carregam corretamente", async ({ page }) => {
   await expect(page.locator(".score-side strong").first()).toBeVisible();
   const runners = page.locator(".runner-canvas");
   await expect(runners).toHaveCount(2);
+  await expect(runners.first()).toHaveAttribute("data-columns", "4");
+  await expect(runners.first()).toHaveAttribute("data-rows", "2");
+  await expect(runners.first()).toHaveAttribute("data-frames", "8");
+  await expect(runners.first()).toHaveAttribute("data-fps", "12");
+  await expect(runners.first()).toHaveAttribute("data-speed", "220");
+  await expect(runners.first()).toHaveAttribute("data-scale", "0.60");
   await expect(runners.first()).toHaveAttribute("data-frame", /\d/);
   const firstFrame = await runners.first().getAttribute("data-frame");
   await expect

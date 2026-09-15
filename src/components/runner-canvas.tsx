@@ -21,8 +21,15 @@ const initialFrames: Record<string, number> = {
   zema: 7,
 };
 
-const FRAME_COUNT = 8;
-const FPS = 12;
+export const RUNNER_CONFIG = {
+  columns: 4,
+  rows: 2,
+  frameCount: 8,
+  fps: 12,
+  speed: 220,
+  scale: 0.6,
+  trim: 6,
+} as const;
 
 export function RunnerCanvas({
   candidateId,
@@ -47,6 +54,8 @@ export function RunnerCanvas({
     let stopped = false;
     let frameIndex = initialFrames[candidateId] ?? 0;
     let lastFrameTime = performance.now();
+    let sourceWidth = canvas.width;
+    let sourceHeight = canvas.height;
     let frameWidth = canvas.width;
     let frameHeight = canvas.height;
 
@@ -54,10 +63,14 @@ export function RunnerCanvas({
       context.clearRect(0, 0, frameWidth, frameHeight);
       context.drawImage(
         image,
-        frameIndex * frameWidth,
-        0,
-        frameWidth,
-        frameHeight,
+        (frameIndex % RUNNER_CONFIG.columns) *
+          (image.naturalWidth / RUNNER_CONFIG.columns) +
+          RUNNER_CONFIG.trim,
+        Math.floor(frameIndex / RUNNER_CONFIG.columns) *
+          (image.naturalHeight / RUNNER_CONFIG.rows) +
+          RUNNER_CONFIG.trim,
+        sourceWidth,
+        sourceHeight,
         0,
         0,
         frameWidth,
@@ -68,10 +81,10 @@ export function RunnerCanvas({
 
     const animate = (now: number) => {
       if (stopped) return;
-      const frameDuration = 1000 / FPS;
+      const frameDuration = 1000 / RUNNER_CONFIG.fps;
       const elapsedFrames = Math.floor((now - lastFrameTime) / frameDuration);
       if (elapsedFrames > 0) {
-        frameIndex = (frameIndex + elapsedFrames) % FRAME_COUNT;
+        frameIndex = (frameIndex + elapsedFrames) % RUNNER_CONFIG.frameCount;
         lastFrameTime += elapsedFrames * frameDuration;
         drawFrame();
       }
@@ -80,8 +93,12 @@ export function RunnerCanvas({
 
     const start = () => {
       if (stopped) return;
-      frameWidth = image.naturalWidth / FRAME_COUNT;
-      frameHeight = image.naturalHeight;
+      sourceWidth =
+        image.naturalWidth / RUNNER_CONFIG.columns - RUNNER_CONFIG.trim * 2;
+      sourceHeight =
+        image.naturalHeight / RUNNER_CONFIG.rows - RUNNER_CONFIG.trim * 2;
+      frameWidth = Math.round(sourceWidth * RUNNER_CONFIG.scale);
+      frameHeight = Math.round(sourceHeight * RUNNER_CONFIG.scale);
       canvas.width = frameWidth;
       canvas.height = frameHeight;
       drawFrame();
@@ -105,10 +122,16 @@ export function RunnerCanvas({
     <canvas
       ref={canvasRef}
       className="runner-canvas"
-      width={298}
-      height={400}
+      width={223}
+      height={300}
       role="img"
       aria-label={`Caricatura animada de ${candidateName} correndo`}
+      data-columns={RUNNER_CONFIG.columns}
+      data-rows={RUNNER_CONFIG.rows}
+      data-frames={RUNNER_CONFIG.frameCount}
+      data-fps={RUNNER_CONFIG.fps}
+      data-speed={RUNNER_CONFIG.speed}
+      data-scale={RUNNER_CONFIG.scale.toFixed(2)}
     />
   );
 }

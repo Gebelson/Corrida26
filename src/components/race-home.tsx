@@ -22,7 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useRace } from "./race-provider";
-import { RunnerCanvas, runnerTilesets } from "./runner-canvas";
+import { RunnerCanvas, runnerTilesets, RUNNER_CONFIG } from "./runner-canvas";
 import { Candidate, number, money } from "@/lib/types";
 export function Counter({ value }: { value: number }) {
   const [display, setDisplay] = useState(value);
@@ -152,7 +152,10 @@ function RaceTrack({
       <motion.div
         className="runner-wrap"
         animate={{ left: `${20 + relative * 48}%` }}
-        transition={{ type: "spring", stiffness: 45, damping: 16 }}
+        transition={{
+          duration: 160 / RUNNER_CONFIG.speed,
+          ease: [0.22, 1, 0.36, 1],
+        }}
       >
         <div className="speed-lines" />
         <Avatar candidate={candidate} runner />
