@@ -4,6 +4,18 @@ test("placar, rotas e layout carregam corretamente", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".hero h1")).toContainText("X");
   await expect(page.locator(".score-side strong").first()).toBeVisible();
+  const runners = page.locator(".runner-frames");
+  await expect(runners).toHaveCount(2);
+  const firstFrame = await runners
+    .first()
+    .evaluate((element) => getComputedStyle(element).backgroundPosition);
+  await expect
+    .poll(() =>
+      runners
+        .first()
+        .evaluate((element) => getComputedStyle(element).backgroundPosition),
+    )
+    .not.toBe(firstFrame);
   await expect(
     page.getByText(/Paródia\. Pontos simbólicos internos/i),
   ).toBeVisible();

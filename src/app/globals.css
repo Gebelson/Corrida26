@@ -587,6 +587,14 @@ svg {
   filter: drop-shadow(0 0 15px rgba(var(--accent-rgb), 0.22));
   z-index: 1;
 }
+.runner-sprite.runner-frames {
+  left: 12.8%;
+  width: 74.4%;
+  background-size: 800% 100%;
+  background-position: 0 0;
+  animation: runner-cycle 0.67s steps(7, end) infinite;
+  will-change: background-position;
+}
 .speed-lines {
   position: absolute;
   width: 290px;
@@ -1600,6 +1608,11 @@ svg {
   }
   to {
     transform: translateY(-3px) rotate(0.5deg);
+  }
+}
+@keyframes runner-cycle {
+  to {
+    background-position: 100% 0;
   }
 }
 @media (min-width: 1440px) {
