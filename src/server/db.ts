@@ -16,8 +16,10 @@ export interface Database extends Queryable {
 }
 export const mode = (): "sandbox" | "production" =>
   process.env.APP_MODE === "sandbox" ? "sandbox" : "production";
+const productionDatabaseUrl = () =>
+  process.env.POSTGRES_URL?.trim() || process.env.DATABASE_URL?.trim();
 export const databaseConfigured = () =>
-  mode() === "sandbox" || Boolean(process.env.DATABASE_URL?.trim());
+  mode() === "sandbox" || Boolean(productionDatabaseUrl());
 export const defaults: Settings = {
   minAmount: 5,
   quickAmounts: [5, 10, 20],
@@ -120,9 +122,10 @@ async function connect(): Promise<Database> {
       await mkdir(path.dirname(location), { recursive: true });
     return createLocalDatabase(location);
   }
-  if (!process.env.DATABASE_URL)
-    throw new Error("DATABASE_URL obrigatório em produção.");
-  const connectionString = new URL(process.env.DATABASE_URL);
+  const databaseUrl = productionDatabaseUrl();
+  if (!databaseUrl)
+    throw new Error("POSTGRES_URL ou DATABASE_URL obrigatório em produção.");
+  const connectionString = new URL(databaseUrl);
   // pg parses sslmode from URLs and may silently override explicit certificate verification.
   for (const key of ["sslmode", "sslcert", "sslkey", "sslrootcert"])
     connectionString.searchParams.delete(key);

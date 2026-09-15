@@ -46,7 +46,8 @@ export function verifySession(token: string): string | null {
 export const authConfigured = () =>
   Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   );
 export async function getSession(
   req: NextRequest,
@@ -59,7 +60,8 @@ export async function getSession(
       throw new ApiError(503, "Autenticação não configurada.");
     const client = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
     const { data, error } = await client.auth.getUser(bearer.slice(7));
