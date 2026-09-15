@@ -27,6 +27,15 @@ import { POST as confirmAPI } from "../src/app/api/sandbox/confirm/route";
 import { GET as meAPI } from "../src/app/api/me/route";
 import { GET as adminAPI } from "../src/app/api/admin/route";
 import { POST as demoAPI } from "../src/app/api/auth/demo/route";
+import {
+  claimReferral,
+  createWithdrawalRequest,
+  creatorDashboard,
+  ensureCreatorProfile,
+  releaseDueCommissions,
+  trackReferralClick,
+} from "../src/server/creators";
+import { defaults } from "../src/server/db";
 
 process.env.APP_MODE = "sandbox";
 process.env.APP_ORIGIN = "http://localhost:3000";
@@ -362,51 +371,30 @@ test("history and percentage derive from persisted snapshots; ledger equals scor
   assert.equal(mismatch.rows.length, 0);
   assert.ok(board.movements.length <= 6);
 });
-test("webhook signature rejects forged, altered, and stale events; accepts second and millisecond clocks", () => {
+test("DePix webhook signature rejects forged, altered, and stale events", () => {
   const secret = "test-secret";
-  const requestId = "request-123";
+  const eventId = "event-123";
   const now = Date.now();
-  for (const ts of [String(Math.floor(now / 1000)), String(now)]) {
-    const signature = createHmac("sha256", secret)
-      .update(`id:123;request-id:${requestId};ts:${ts};`)
-      .digest("hex");
-    const header = `ts=${ts},v1=${signature}`;
-    assert.equal(
-      validateWebhook(header, requestId, "123", secret, now).providerId,
-      "123",
-    );
-    assert.throws(
-      () => validateWebhook(header, requestId, "456", secret, now),
-      /inválida/,
-    );
-    assert.throws(
-      () => validateWebhook(header, requestId, "123", secret, now + 600000),
-      /expirada/,
-    );
-  }
-  assert.throws(
-    () => validateWebhook(null, requestId, "123", secret),
-    /inválida/,
-  );
+  const ts = String(Math.floor(now / 1000)), raw = JSON.stringify({ id: "123" });
+  const signature = createHmac("sha256", secret).update(`${ts}.${raw}`).digest("hex");
+  const header = `t=${ts},v1=${signature}`;
+  assert.equal(validateWebhook(header, eventId, raw, secret, now).eventId, eventId);
+  assert.throws(() => validateWebhook(header, eventId, raw + " ", secret, now), /inválida/);
+  assert.throws(() => validateWebhook(header, eventId, raw, secret, now + 600000), /expirada/);
+  assert.throws(() => validateWebhook(null, eventId, raw, secret), /inválida/);
 });
 test("payment reconciliation validates amount, currency, method, live mode and binding", () => {
   const payment = {
-    id: 123,
-    status: "approved",
-    transaction_amount: 20,
-    currency_id: "BRL",
-    external_reference: "abc",
-    payment_method_id: "pix",
-    live_mode: true,
+    id: "123", status: "completed", amount: 2000, is_live: true,
+    payment_method: "pix", metadata: { transaction_id: "abc" },
   };
   const row = { id: "abc", provider_id: "123", amount_cents: 2000 };
   verifyPayment(payment, row);
   for (const change of [
-    { transaction_amount: 21 },
-    { currency_id: "USD" },
-    { external_reference: "wrong" },
-    { id: 124 },
-    { payment_method_id: "card" },
+    { amount: 2100 },
+    { metadata: { transaction_id: "wrong" } },
+    { id: "124" },
+    { payment_method: "card" },
   ])
     assert.throws(
       () => verifyPayment({ ...payment, ...change }, row),
@@ -414,7 +402,7 @@ test("payment reconciliation validates amount, currency, method, live mode and b
     );
   process.env.APP_MODE = "production";
   assert.throws(
-    () => verifyPayment({ ...payment, live_mode: false }, row),
+    () => verifyPayment({ ...payment, is_live: false }, row),
     /não corresponde/,
   );
   process.env.APP_MODE = "sandbox";
@@ -620,4 +608,49 @@ test("production refuses both sandbox settlement and demo admin login", async ()
   } finally {
     process.env.APP_MODE = "sandbox";
   }
+});
+
+test("direct referral creates one frozen commission, bonus and immutable wallet entries", async () => {
+  const creatorId = "creator-direct", buyerId = "buyer-direct";
+  await db.query("INSERT INTO users(id,name,email,anonymous) VALUES($1,'Criador Direto','creator@test.dev',false),($2,'Comprador','buyer@test.dev',false)",[creatorId,buyerId]);
+  const creator = await ensureCreatorProfile(db, creatorId);
+  const click = await trackReferralClick(db, String(creator.referral_code), { ipHash:"ip-a",userAgentHash:"ua-a",landingPath:"/r/test",attributionDays:30 });
+  assert.equal(await claimReferral(db,buyerId,click.token),true);
+  assert.equal(await claimReferral(db,buyerId,click.token),false);
+  const tx = await createTransaction(db,{id:buyerId,name:"Comprador",email:"buyer@test.dev",anonymous:false,admin:false},{candidateId:"lula",action:"add",amount:100,idempotencyKey:"creator-payment-key-0001"});
+  await db.query("UPDATE transactions SET provider='depix',provider_live=true,provider_id='depix-live-1' WHERE id=$1",[tx.id]);
+  await settle(db,String(tx.id),"paid");
+  const dashboard = await creatorDashboard(db,creatorId) as unknown as {summary:{balances:{pending:number;internalCredit:number};totalCommission:number};commissions:Record<string,unknown>[]};
+  assert.equal(dashboard.summary.balances.pending,20);
+  assert.equal(dashboard.summary.totalCommission,20);
+  assert.equal(dashboard.commissions.length,1);
+  const buyerWallet=(await db.query("SELECT internal_credit_cents FROM wallet_balances WHERE user_id=$1",[buyerId])).rows[0];
+  assert.equal(Number(buyerWallet.internal_credit_cents),1000);
+  await assert.rejects(db.query("UPDATE wallet_ledger SET amount_cents=1 WHERE user_id=$1",[creatorId]),/imutável|immutable|append-only/i);
+});
+
+test("commission release, refund and Pix withdrawal reservation are idempotent", async () => {
+  const creatorId="creator-direct";
+  await db.query("UPDATE commissions SET available_at=now()-interval '1 minute' WHERE creator_user_id=$1",[creatorId]);
+  assert.equal(await releaseDueCommissions(db),1);
+  assert.equal(await releaseDueCommissions(db),0);
+  let dash=await creatorDashboard(db,creatorId) as unknown as {summary:{balances:{pending:number;available:number;withdrawalPending:number}}};
+  assert.equal(dash.summary.balances.pending,0); assert.equal(dash.summary.balances.available,20);
+  await db.query("UPDATE users SET kyc_status='approved' WHERE id=$1",[creatorId]);
+  const input={amount:20,pixKeyType:"cpf",pixKey:"12345678901",taxNumber:"12345678901",idempotencyKey:"withdrawal-request-key-0001"};
+  const first=await createWithdrawalRequest(db,creatorId,input,{...defaults.creatorProgram,minWithdrawal:20});
+  const repeated=await createWithdrawalRequest(db,creatorId,input,{...defaults.creatorProgram,minWithdrawal:20});
+  assert.equal(first.id,repeated.id);
+  dash=await creatorDashboard(db,creatorId) as unknown as {summary:{balances:{pending:number;available:number;withdrawalPending:number}}};
+  assert.equal(dash.summary.balances.available,0); assert.equal(dash.summary.balances.withdrawalPending,20);
+});
+
+test("self referral and expired attribution are rejected", async () => {
+  const id="creator-self"; await db.query("INSERT INTO users(id,name,anonymous) VALUES($1,'Self',false)",[id]);
+  const creator=await ensureCreatorProfile(db,id);
+  const click=await trackReferralClick(db,String(creator.referral_code),{ipHash:"ip-self",userAgentHash:"ua",landingPath:"/",attributionDays:30});
+  assert.equal(await claimReferral(db,id,click.token),false);
+  await db.query("UPDATE referral_clicks SET expires_at=now()-interval '1 day' WHERE tracking_token_hash IS NOT NULL AND creator_user_id=$1",[id]);
+  const buyer="expired-buyer"; await db.query("INSERT INTO users(id,name,anonymous) VALUES($1,'Expired',false)",[buyer]);
+  assert.equal(await claimReferral(db,buyer,click.token),false);
 });

@@ -17,6 +17,11 @@ import {
   type Queryable,
 } from "./db";
 import { ApiError } from "./security";
+import {
+  createCommissionForPaidTransaction,
+  encryptFinancial,
+  reverseCommissionForTransaction,
+} from "./creators";
 
 const timestamp = (value: unknown) => new Date(value as string).toISOString();
 export function getPresentationBoard(now = new Date()): Board {
@@ -70,7 +75,15 @@ export async function getSettings(db: Queryable): Promise<Settings> {
   const result = await db.query("SELECT value FROM site_settings WHERE id=1");
   if (!result.rows[0])
     throw new ApiError(503, "Execute as migrações do banco.");
-  return result.rows[0].value as Settings;
+  const value = result.rows[0].value as Partial<Settings>;
+  return {
+    ...defaults,
+    ...value,
+    creatorProgram: {
+      ...defaults.creatorProgram,
+      ...(value.creatorProgram || {}),
+    },
+  };
 }
 export async function standings(
   db: Queryable,
@@ -142,6 +155,9 @@ export function publicTransaction(row: Record<string, unknown>): Transaction {
       transaction_data?: { qr_code?: string; qr_code_base64?: string };
     };
     date_of_expiration?: string;
+    pix?: { qr_code?: string };
+    payment_url?: string;
+    expires_at?: string;
   } | null;
   const qr = payload?.point_of_interaction?.transaction_data;
   return {
@@ -152,13 +168,18 @@ export function publicTransaction(row: Record<string, unknown>): Transaction {
     points: Number(row.points),
     status: row.status as Transaction["status"],
     createdAt: timestamp(row.created_at),
-    ...(qr?.qr_code ? { qrCode: qr.qr_code } : {}),
+    ...(payload?.pix?.qr_code
+      ? { qrCode: payload.pix.qr_code }
+      : qr?.qr_code
+        ? { qrCode: qr.qr_code }
+        : {}),
     ...(qr?.qr_code_base64
       ? { qrImage: `data:image/png;base64,${qr.qr_code_base64}` }
       : {}),
-    ...(payload?.date_of_expiration
-      ? { expiresAt: payload.date_of_expiration }
+    ...(payload?.expires_at || payload?.date_of_expiration
+      ? { expiresAt: payload.expires_at || payload.date_of_expiration }
       : {}),
+    ...(payload?.payment_url ? { paymentUrl: payload.payment_url } : {}),
   };
 }
 export const transactionSchema = z.object({
@@ -167,6 +188,11 @@ export const transactionSchema = z.object({
   amount: z.number().int().min(1).max(10000),
   idempotencyKey: z.string().min(16).max(100),
   email: z.email().max(254).optional(),
+  taxNumber: z
+    .string()
+    .transform((value) => value.replace(/\D/g, ""))
+    .refine((value) => /^\d{11}$|^\d{14}$/.test(value), "CPF/CNPJ inválido")
+    .optional(),
 });
 export async function createTransaction(
   db: Database,
@@ -210,11 +236,11 @@ export async function createTransaction(
       ).rows.length
     )
       throw new ApiError(404, "Candidato indisponível.");
-    if (mode() === "production" && !data.email && !user.email)
-      throw new ApiError(400, "Informe um e-mail para gerar o Pix.");
+    if (mode() === "production" && !data.taxNumber)
+      throw new ApiError(400, "Informe o CPF ou CNPJ do pagador para gerar o Pix.");
     const row = (
       await tx.query(
-        `INSERT INTO transactions(id,user_id,candidate_id,action,amount_cents,points,idempotency_key,provider,payer_email) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        `INSERT INTO transactions(id,user_id,candidate_id,action,amount_cents,points,idempotency_key,provider,payer_email,payer_tax_number_ciphertext) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
         [
           randomUUID(),
           user.id,
@@ -223,8 +249,9 @@ export async function createTransaction(
           data.amount * 100,
           data.amount,
           data.idempotencyKey,
-          mode() === "sandbox" ? "sandbox" : "mercadopago",
+          mode() === "sandbox" ? "sandbox" : "depix",
           data.email || user.email || null,
+          data.taxNumber ? encryptFinancial(data.taxNumber) : null,
         ],
       )
     ).rows[0];
@@ -322,6 +349,11 @@ export async function settle(
           [points, row.candidate_id],
         );
         await snapshot(tx, before);
+        await createCommissionForPaidTransaction(
+          tx,
+          row,
+          (await getSettings(tx)).creatorProgram,
+        );
       }
       await tx.query(
         "UPDATE transactions SET status=$1,updated_at=now() WHERE id=$2",
@@ -392,6 +424,7 @@ async function reverseInTransaction(
         }),
       ],
     );
+  await reverseCommissionForTransaction(tx, String(row.id), reason);
   await snapshot(tx, before);
 }
 const candidateSchema = z.object({
@@ -420,6 +453,17 @@ const settingsSchema = z
     anonymousEnabled: z.boolean(),
     legalNotice: z.string().trim().min(80).max(2000),
     heroText: z.string().trim().min(10).max(500),
+    creatorProgram: z.object({
+      enabled: z.boolean(),
+      attributionDays: z.number().int().min(1).max(365),
+      commissionDays: z.number().int().min(1).max(365),
+      holdDays: z.number().int().min(0).max(90),
+      minWithdrawal: z.number().int().min(1).max(100000),
+      customerBonusPercent: z.number().min(0).max(100),
+      customerBonusMax: z.number().int().min(0).max(10000),
+      withdrawalsEnabled: z.boolean(),
+      leaderboardEnabled: z.boolean(),
+    }),
   })
   .refine(
     (v) => v.quickAmounts.every((amount) => amount >= v.minAmount),
@@ -498,8 +542,7 @@ export async function adminOperation(
       if (
         value.paymentsEnabled &&
         mode() === "production" &&
-        (!process.env.MERCADOPAGO_ACCESS_TOKEN ||
-          !process.env.MERCADOPAGO_WEBHOOK_SECRET)
+        (!process.env.DEPIX_API_KEY || !process.env.DEPIX_WEBHOOK_SECRET)
       )
         throw new ApiError(
           400,

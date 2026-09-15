@@ -32,6 +32,7 @@ export function Header() {
             ["/", "Início"],
             ["/ranking", "Ranking"],
             ["/historico", "Histórico"],
+            ["/creators", "Criadores"],
             ["/regras", "Regras"],
           ].map(([href, label]) => (
             <Link

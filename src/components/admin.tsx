@@ -36,6 +36,7 @@ import {
   TransactionTable,
 } from "./secondary";
 import "./secondary.css";
+import Link from "next/link";
 
 interface AuditEntry {
   id: string;
@@ -211,10 +212,7 @@ export function AdminPage() {
         title="DIREÇÃO DE PROVA"
         description="Gerencie a corrida com transparência. Toda alteração deixa um registro."
       >
-        <span className="sec-admin-mark">
-          <ShieldCheck size={17} />
-          ÁREA RESTRITA
-        </span>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}><Link className="sec-button" href="/admin/creators">Programa de criadores</Link><span className="sec-admin-mark"><ShieldCheck size={17} />ÁREA RESTRITA</span></div>
       </SecondaryHeading>
       {!user?.admin ? (
         <section className="sec-panel sec-account-gate">
@@ -526,6 +524,20 @@ export function AdminPage() {
                           />
                           <small>Separe os valores por vírgula.</small>
                         </label>
+                      </div>
+                    </fieldset>
+                    <fieldset>
+                      <legend>Programa de criadores</legend>
+                      <label className="sec-switch-row"><span><strong>Programa ativo</strong><small>Permite gerar links e atribuir novos indicados.</small></span><input type="checkbox" checked={settings.creatorProgram.enabled} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,enabled:e.target.checked}})}/></label>
+                      <label className="sec-switch-row"><span><strong>Saques ativos</strong><small>Autoriza novas solicitações para contas aprovadas.</small></span><input type="checkbox" checked={settings.creatorProgram.withdrawalsEnabled} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,withdrawalsEnabled:e.target.checked}})}/></label>
+                      <label className="sec-switch-row"><span><strong>Ranking público</strong><small>Exibe criadores participantes.</small></span><input type="checkbox" checked={settings.creatorProgram.leaderboardEnabled} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,leaderboardEnabled:e.target.checked}})}/></label>
+                      <div className="sec-form-row">
+                        <label>Atribuição (dias)<input type="number" min="1" max="365" value={settings.creatorProgram.attributionDays} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,attributionDays:Number(e.target.value)}})}/></label>
+                        <label>Comissão (dias)<input type="number" min="1" max="365" value={settings.creatorProgram.commissionDays} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,commissionDays:Number(e.target.value)}})}/></label>
+                        <label>Retenção (dias)<input type="number" min="0" max="90" value={settings.creatorProgram.holdDays} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,holdDays:Number(e.target.value)}})}/></label>
+                        <label>Saque mínimo (R$)<input type="number" min="1" value={settings.creatorProgram.minWithdrawal} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,minWithdrawal:Number(e.target.value)}})}/></label>
+                        <label>Bônus do indicado (%)<input type="number" min="0" max="100" value={settings.creatorProgram.customerBonusPercent} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,customerBonusPercent:Number(e.target.value)}})}/></label>
+                        <label>Limite do bônus (R$)<input type="number" min="0" value={settings.creatorProgram.customerBonusMax} onChange={e=>setSettings({...settings,creatorProgram:{...settings.creatorProgram,customerBonusMax:Number(e.target.value)}})}/></label>
                       </div>
                     </fieldset>
                     <fieldset>

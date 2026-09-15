@@ -8,15 +8,10 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import type { SessionUser } from "../lib/types";
 import { getDB, mode, type Queryable } from "./db";
+import { ApiError } from "./errors";
+import { claimReferral } from "./creators";
 
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+export { ApiError } from "./errors";
 const runtimeSecret = randomBytes(48).toString("hex");
 function secret() {
   const value = process.env.SESSION_SECRET;
@@ -89,6 +84,8 @@ export async function getSession(
     id = cookie ? verifySession(cookie) : null;
   }
   if (!id) return null;
+  const trackingToken = req.cookies.get("corrida_referral")?.value;
+  if (trackingToken) await claimReferral(db, id, trackingToken);
   const result = await db.query(
     "SELECT u.*,EXISTS(SELECT 1 FROM admin_users a WHERE a.user_id=u.id) AS admin FROM users u WHERE u.id=$1",
     [id],

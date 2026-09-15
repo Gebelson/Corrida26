@@ -1,8 +1,8 @@
 # CORRIDA 26
 
-Aplicação de corrida por pontos simbólicos: Next.js, React, TypeScript, Tailwind, Framer Motion e PostgreSQL. O confronto principal vem sempre das duas primeiras posições calculadas pelo servidor. O projeto inclui interface, rotas de API, autenticação, administração, banco persistente, ledger imutável, adapter Pix e testes de integração.
+Aplicação de corrida por pontos simbólicos: Next.js, React, TypeScript, Framer Motion e PostgreSQL. O confronto principal vem sempre das duas primeiras posições calculadas pelo servidor. O projeto inclui interface, rotas de API, autenticação, administração, banco persistente, ledger imutável, adapter Pix e testes de integração.
 
-**Estado da entrega:** funciona localmente em sandbox com banco PostgreSQL embarcado persistente (PGlite). A confirmação de pagamento nesse ambiente é explicitamente simulada pelo servidor, sem cobrança. Antes das credenciais de produção serem conectadas, o deploy público exibe o placar completo em modo de apresentação somente para leitura e mantém participações bloqueadas. Produção transacional exige configurar Supabase/PostgreSQL, Google/e-mail, credenciais Mercado Pago, domínio HTTPS e realizar a homologação externa; essas contas e credenciais não acompanham o projeto.
+**Estado da entrega:** funciona localmente em sandbox com banco PostgreSQL embarcado persistente (PGlite). A confirmação de pagamento nesse ambiente é explicitamente simulada pelo servidor, sem cobrança. Antes das credenciais de produção serem conectadas, o deploy público exibe o placar completo em modo de apresentação somente para leitura e mantém participações bloqueadas. Produção transacional exige configurar Supabase/PostgreSQL, Google/e-mail, credenciais DePix, domínio HTTPS e realizar a homologação externa; essas contas e credenciais não acompanham o projeto.
 
 ## Executar localmente
 
@@ -31,16 +31,22 @@ O banco local fica em `.local/db`. Para preservar o histórico, mantenha essa pa
 ## Ativar produção
 
 1. Crie o PostgreSQL/Supabase e obtenha uma conexão de servidor com permissão para executar as migrações. Guarde `DATABASE_URL` somente no backend. TLS verifica o certificado; configure `DATABASE_SSL_CA` se o provedor exigir uma CA específica. Nunca use `rejectUnauthorized: false`.
-2. Configure as variáveis do servidor: `APP_MODE=production`, `APP_ORIGIN=https://seu-dominio`, `SESSION_SECRET`, `DATABASE_URL`, `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET`. Configure também `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` para o cliente. Não exponha service-role, segredo de webhook ou token de pagamento.
+2. Configure as variáveis do servidor: `APP_MODE=production`, `APP_ORIGIN=https://seu-dominio`, `SESSION_SECRET`, `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, `CRON_SECRET`, `DEPIX_API_KEY` e `DEPIX_WEBHOOK_SECRET`. Configure também `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` para o cliente. Não exponha service-role, segredo de webhook ou token de pagamento.
 3. Execute `npm run db:migrate` em um terminal com as variáveis exportadas. Scripts `tsx` não carregam `.env.local` automaticamente. A migração cria as tabelas, cadastra os seis participantes iniciais com pontuação zero e inicia os pagamentos pausados. Nenhum saldo fictício entra em produção. Faça backup antes de migrações futuras.
 4. No Supabase Auth, configure Google e e-mail/OTP, domínio, SMTP e a URL de retorno usada pelo site. Habilite os redirects da origem publicada. Faça login no site com o futuro administrador; a API materializa o usuário após validar o token em `auth.getUser()`.
 5. No SQL Editor privado, conceda a permissão administrativa ao UUID já autenticado: `INSERT INTO public.admin_users(user_id) VALUES ('UUID_DO_USUARIO');`. Não atribua essa permissão por metadados do navegador. Os seis participantes iniciais começam em zero; use `/admin` para editar, ocultar ou cadastrar outros.
-6. Configure as notificações do Mercado Pago para `https://seu-dominio/api/webhooks/mercadopago`. O adapter usa Payments API `/v1/payments`, Pix, e-mail do pagador e idempotência. A conta precisa estar apta a receber Pix. Produção aceita apenas cobranças reais (`live_mode=true`).
+6. No DePix, crie uma chave live com os escopos necessários e configure o webhook `https://seu-dominio/api/webhooks/depix`. A aplicação valida a assinatura HMAC, deduplica o identificador do evento, consulta novamente o checkout e só credita pontos no status final `completed`.
 7. Publique na Vercel como projeto Next.js, com as mesmas variáveis. Execute `npm run build` antes. Defina o domínio HTTPS e mantenha o endpoint do webhook acessível ao provedor. Nenhum diretório `.local`, `.env.local` ou credencial deve ser publicado.
 8. Ative pagamentos em `/admin` quando as integrações estiverem configuradas. Homologue uma cobrança, confirme o webhook, confira idempotência/estorno, login Google/e-mail, autorização administrativa e atualização em duas sessões no domínio final. A integração externa não foi validada sem suas credenciais.
 
 Para recuperar notificações perdidas ou uma criação de cobrança interrompida, execute `npx tsx scripts/reconcile.ts` em um agendador confiável, com as variáveis do servidor. Ele consulta o provedor novamente, processa até 100 registros por execução e só aplica estados confirmados. O webhook é o caminho principal; a consulta individual da cobrança também reconcilia o estado. Monitore falhas do job e ajuste a frequência/limite ao volume. O job também remove janelas vencidas do rate limit.
 
+
+## Programa de criadores
+
+Cada conta autenticada pode abrir `/creator` para gerar um link `/r/[codigo]`. A atribuição usa último clique válido por 30 dias e é fixada no primeiro cadastro; não existe segundo nível. Comissões de compras DePix live ficam pendentes por 14 dias, passam a disponíveis pelo job de reconciliação e são estornadas por lançamentos compensatórios quando a compra é devolvida. Os níveis mensais padrão são Iniciante 20%, Creator 25%, Pro 30% e Elite 35%. O cliente indicado recebe crédito interno de 10% na primeira compra, limitado a R$ 20.
+
+A carteira é derivada de `wallet_ledger`, que é append-only. Saques exigem KYC aprovado, saldo disponível, mínimo configurável de R$ 50 e chave de idempotência. CPF/CNPJ e chave Pix são armazenados com AES-256-GCM. O painel `/admin/creators` controla KYC, suspensão, comissões bloqueadas e sinais antifraude, sempre com motivo no `admin_audit`. A API de saque DePix é não custodial: a resposta cria a cotação/endereço de depósito; a liquidação depende de a carteira operacional financiar essa retirada e o sistema acompanha o estado pelo provedor.
 ## Segurança e consistência
 
 O frontend gera uma chave de idempotência por intenção de participação. O backend vincula essa chave ao proprietário e rejeita reutilização com valores diferentes. A primeira requisição anônima também é idempotente antes de o cookie chegar ao navegador. A identidade anônima usa um cookie assinado, `HttpOnly`, `SameSite=Lax` e `Secure` sob HTTPS; não contém autorização administrativa.
@@ -59,7 +65,7 @@ src/components/       componentes visuais reutilizáveis
 src/lib/types.ts      contrato compartilhado
 src/server/db.ts      PostgreSQL/PGlite e inicialização
 src/server/game.ts    ranking, ledger, confirmações e administração
-src/server/payments.ts adapter Mercado Pago e webhook
+src/server/payments.ts adapter DePix, webhook e saques
 src/server/security.ts sessão, origem, limites e erros
 supabase/migrations/  schema SQL e proteção dos registros
 scripts/              migração, seed restrito e reconciliação
@@ -81,7 +87,7 @@ Os testes do backend usam um PostgreSQL PGlite isolado em memória e cobrem conf
 
 ## Documentação do provedor
 
-- [Pix na Payments API](https://www.mercadopago.com.br/developers/pt/docs/checkout-bricks/payment-brick/payment-submission/pix)
-- [Validação de notificações Webhook](https://www.mercadopago.com.br/developers/pt/docs/wix/additional-content/notifications/webhooks)
+- [Documentação da API DePix](https://depixapp.com/docs)
+- [Painel DePix](https://depixapp.com/app/home)
 
 Os pontos exibidos são participações simbólicas nesta paródia e o placar inclui movimentações realizadas dentro do jogo. Não representam voto eleitoral, pesquisa oficial, intenção de voto, doação ou vínculo com candidato ou campanha.

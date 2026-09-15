@@ -17,6 +17,7 @@ import {
   ApiError,
   anonymousId,
 } from "@/server/security";
+import { assessTransactionRisk } from "@/server/creators";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const POST = route(async (req) => {
@@ -38,6 +39,7 @@ export const POST = route(async (req) => {
   }
   await rateLimit(db, "create-user:" + user.id, 20);
   const row = await createTransaction(db, user, input);
+  await assessTransactionRisk(db, user.id, String(row.id), ipKey(req));
   let response: NextResponse;
   try {
     response = NextResponse.json(await ensureCharge(db, row));

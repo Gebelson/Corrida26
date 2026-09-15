@@ -1,4 +1,4 @@
-import { readFile, mkdir } from "node:fs/promises";
+import { readFile, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { Pool } from "pg";
@@ -26,6 +26,17 @@ export const defaults: Settings = {
   heroText:
     "Escolha um lado. Cada pagamento confirmado soma apenas os pontos simbólicos correspondentes ao valor escolhido.",
   legalNotice: LEGAL,
+  creatorProgram: {
+    enabled: true,
+    attributionDays: 30,
+    commissionDays: 30,
+    holdDays: 14,
+    minWithdrawal: 50,
+    customerBonusPercent: 10,
+    customerBonusMax: 20,
+    withdrawalsEnabled: true,
+    leaderboardEnabled: true,
+  },
 };
 export const demoCandidates = [
   ["lula", "Lula", "Lula", "#ff344c", 125336],
@@ -36,10 +47,13 @@ export const demoCandidates = [
   ["zema", "Romeu Zema", "Zema", "#91a5bc", 42180],
 ] as const;
 export async function schemaSQL() {
-  return readFile(
-    path.join(process.cwd(), "supabase/migrations/001_init.sql"),
-    "utf8",
-  );
+  const directory = path.join(process.cwd(), "supabase/migrations");
+  const files = (await readdir(directory))
+    .filter((file) => /^\d+.*\.sql$/.test(file))
+    .sort();
+  return (
+    await Promise.all(files.map((file) => readFile(path.join(directory, file), "utf8")))
+  ).join("\n\n");
 }
 export async function initialize(db: Queryable, seed = false) {
   await db.query(

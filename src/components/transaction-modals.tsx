@@ -35,6 +35,7 @@ export function CheckoutModal({
     [action, setAction] = useState<Action>("add"),
     [candidateId, setCandidateId] = useState(""),
     [email, setEmail] = useState(""),
+    [taxNumber, setTaxNumber] = useState(""),
     [transaction, setTransaction] = useState<Transaction | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -92,6 +93,7 @@ export function CheckoutModal({
           amount: value,
           idempotencyKey: key.current,
           email: email || user?.email,
+          taxNumber,
         }),
       });
       setTransaction(result);
@@ -262,6 +264,20 @@ export function CheckoutModal({
                   />
                 </label>
               )}
+              {board?.mode === "production" && (
+                <label className="form-label">
+                  CPF ou CNPJ do pagador
+                  <input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={taxNumber}
+                    placeholder="Somente números"
+                    maxLength={18}
+                    onChange={(e) => setTaxNumber(e.target.value.replace(/\D/g, "").slice(0, 14))}
+                  />
+                  <small>Enviado com criptografia apenas para gerar a cobrança Pix.</small>
+                </label>
+              )}
               {!canAnonymous && (!user || user.anonymous) ? (
                 <button
                   className="button button-primary wide"
@@ -278,7 +294,8 @@ export function CheckoutModal({
                     !board?.settings.paymentsEnabled ||
                     (board.mode === "production" &&
                       !user?.email &&
-                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
+                    (board?.mode === "production" && !/^\d{11}$|^\d{14}$/.test(taxNumber))
                   }
                   onClick={() => void create()}
                 >
@@ -406,6 +423,11 @@ export function CheckoutModal({
                         {copied ? "Código copiado" : "Copiar código Pix"}
                       </button>
                     </>
+                  )}
+                  {transaction.paymentUrl && (
+                    <a className="button button-primary wide" href={transaction.paymentUrl} target="_blank" rel="noopener noreferrer">
+                      Abrir pagamento Pix <ArrowUpRight size={16} />
+                    </a>
                   )}
                   <p className="awaiting-payment">
                     <LoaderCircle className="spin" size={15} /> Aguardando

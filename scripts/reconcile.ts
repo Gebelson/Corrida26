@@ -1,5 +1,6 @@
 import { getDB, mode } from "../src/server/db";
-import { ensureCharge, reconcile } from "../src/server/payments";
+import { ensureCharge, reconcile, reconcileWithdrawal } from "../src/server/payments";
+import { releaseDueCommissions } from "../src/server/creators";
 
 // Run from a trusted scheduler/operations console with server environment variables.
 // Webhooks are primary. This repairs missed callbacks or timeouts without fabricating payment approval.
@@ -10,7 +11,7 @@ async function main() {
   let failures = 0;
   try {
     const { rows } = await db.query(
-      "SELECT * FROM transactions WHERE provider='mercadopago' AND (status='pending' OR (status='paid' AND created_at>now()-interval '30 days')) ORDER BY updated_at ASC LIMIT 100",
+      "SELECT * FROM transactions WHERE provider='depix' AND (status='pending' OR (status='paid' AND created_at>now()-interval '30 days')) ORDER BY updated_at ASC LIMIT 100",
     );
     for (const row of rows) {
       try {
@@ -23,9 +24,17 @@ async function main() {
         );
       }
     }
+    const withdrawals = (await db.query("SELECT * FROM withdrawals WHERE status='processing' AND provider_id IS NOT NULL ORDER BY updated_at LIMIT 100")).rows;
+    for (const withdrawal of withdrawals) {
+      try { await reconcileWithdrawal(db, withdrawal); } catch (error) {
+        failures++;
+        console.error(`Falha no saque ${withdrawal.id}: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+      }
+    }
+    const released = await releaseDueCommissions(db);
     await db.query("DELETE FROM rate_limits WHERE expires_at<now()");
     console.log(
-      `Reconciliação: ${rows.length} cobranças consultadas; ${failures} falhas.`,
+      `Reconciliação: ${rows.length} cobranças, ${withdrawals.length} saques e ${released} comissões liberadas; ${failures} falhas.`,
     );
   } finally {
     await db.close();
