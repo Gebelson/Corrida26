@@ -144,8 +144,8 @@ svg {
 .brand {
   display: flex;
   align-items: center;
-  width: 217px;
-  height: 72px;
+  width: 265px;
+  height: auto;
   flex: 0 0 auto;
 }
 .brand img {
@@ -1633,7 +1633,7 @@ svg {
     margin-right: 10px;
   }
   .brand {
-    width: 205px;
+    width: 235px;
     height: auto;
   }
   .system-bar {
@@ -1720,7 +1720,7 @@ svg {
     gap: 15px;
   }
   .brand {
-    width: 188px;
+    width: 212px;
     height: auto;
   }
   .login-button {
