@@ -19,10 +19,10 @@ export function Header() {
       <header className="site-header">
         <Link href="/" className="brand" aria-label="CORRIDA 26 — início">
           <Image
-            src="/logo-corrida26.png"
+            src="/logo.svg"
             alt=""
-            width={247}
-            height={55}
+            width={217}
+            height={72}
             priority
           />
         </Link>
@@ -85,10 +85,10 @@ export function Footer() {
       <footer className="site-footer">
         <div>
           <Image
-            src="/logo-corrida26.png"
+            src="/logo.svg"
             alt="CORRIDA 26"
-            width={247}
-            height={55}
+            width={155}
+            height={52}
           />
           <p>A disputa acontece aqui. Os pontos também.</p>
         </div>
