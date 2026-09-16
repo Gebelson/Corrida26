@@ -883,9 +883,14 @@ export function AccountPage() {
             </button>
             {logoutError && <p className="sec-account-error">{logoutError}</p>}
           </section>
-          <section className="sec-panel" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,marginBottom:14}}>
-            <div><strong>PROGRAMA DE CRIADORES</strong><p style={{margin:"6px 0 0"}}>Crie seu link, acompanhe indicações e comissões diretas.</p></div>
-            <Link className="sec-button sec-button-primary" href="/creator">Abrir painel <ArrowRight size={16}/></Link>
+          <section className="sec-panel sec-creator-promo">
+            <div className="sec-creator-promo-copy">
+              <h2>PROGRAMA DE CRIADORES</h2>
+              <p>Crie seu link, acompanhe indicações e comissões diretas.</p>
+            </div>
+            <Link className="sec-button sec-button-primary" href="/creator">
+              Abrir painel <ArrowRight size={16} />
+            </Link>
           </section>
           <div className="sec-account-stats">
             <div className="sec-panel">

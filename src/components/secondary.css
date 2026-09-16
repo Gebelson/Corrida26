@@ -832,6 +832,51 @@
   color: #ff8c9a;
   font-size: 10px;
 }
+.sec-creator-promo {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+  min-height: 108px;
+  margin-bottom: 14px;
+  padding: 25px 27px 25px 31px;
+  background:
+    radial-gradient(circle at 92% 50%, #f0445318, transparent 28%),
+    linear-gradient(110deg, #101d2edd, #091522e8);
+}
+.sec-creator-promo::before {
+  content: "";
+  position: absolute;
+  inset: 19px auto 19px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(#ff5262, #f04453);
+  box-shadow: 0 0 18px #f0445388;
+}
+.sec-creator-promo-copy {
+  min-width: 0;
+}
+.sec-creator-promo-copy h2 {
+  margin: 0;
+  color: #f4f7fc;
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+.sec-creator-promo-copy p {
+  margin: 8px 0 0;
+  color: #91a3ba;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.sec-creator-promo > .sec-button {
+  flex-shrink: 0;
+  min-width: 137px;
+}
 .sec-account-stats,
 .sec-admin-stats {
   display: grid;
@@ -1833,6 +1878,19 @@
     flex-direction: column;
   }
   .sec-account-profile .sec-button {
+    width: 100%;
+  }
+  .sec-creator-promo {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 0;
+    padding: 23px 20px 21px 23px;
+  }
+  .sec-creator-promo-copy h2 {
+    font-size: 20px;
+  }
+  .sec-creator-promo > .sec-button {
     width: 100%;
   }
   .sec-transactions th,
