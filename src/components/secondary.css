@@ -780,6 +780,58 @@
 .sec-account-gate .sec-alert {
   text-align: left;
 }
+.sec-account-profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 20px 22px;
+}
+.sec-account-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.sec-account-identity > svg {
+  color: #8ba6c4;
+}
+.sec-account-identity > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.sec-account-identity span {
+  color: #7188a3;
+  font-size: 8px;
+  letter-spacing: 1.4px;
+}
+.sec-account-identity strong {
+  font-size: 14px;
+}
+.sec-account-identity small {
+  overflow: hidden;
+  color: #8da1b8;
+  font-size: 10px;
+  text-overflow: ellipsis;
+}
+.sec-button-danger {
+  border-color: #6d3442;
+  background: #351822;
+  color: #ff9aa7;
+}
+.sec-button-danger:hover {
+  border-color: #b95566;
+  background: #51202d;
+}
+.sec-account-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: #ff8c9a;
+  font-size: 10px;
+}
 .sec-account-stats,
 .sec-admin-stats {
   display: grid;
@@ -1775,6 +1827,13 @@
   .sec-account-gate .sec-button {
     white-space: normal;
     max-width: 100%;
+  }
+  .sec-account-profile {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .sec-account-profile .sec-button {
+    width: 100%;
   }
   .sec-transactions th,
   .sec-transactions td {

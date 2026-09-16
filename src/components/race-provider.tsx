@@ -21,6 +21,7 @@ type Context = {
   refresh: () => Promise<void>;
   openCheckout: (candidateId: string, action: Action, amount?: number) => void;
   openLogin: () => void;
+  logout: () => Promise<void>;
   api: <T>(url: string, options?: RequestInit) => Promise<T>;
   notification: string | null;
   supabase: SupabaseClient | null;
@@ -102,6 +103,28 @@ export function RaceProvider({ children }: { children: ReactNode }) {
         );
     }
   }, [api]);
+  const logout = useCallback(async () => {
+    const response = await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      throw new Error(data?.error || "Não foi possível sair da conta.");
+    }
+    const client = getAuth();
+    if (client) {
+      const { error: signOutError } = await client.auth.signOut({
+        scope: "local",
+      });
+      if (signOutError) throw signOutError;
+    }
+    if (mounted.current) setUser(null);
+    await refresh();
+  }, [refresh]);
   useEffect(() => {
     mounted.current = true;
     void refresh();
@@ -151,6 +174,7 @@ export function RaceProvider({ children }: { children: ReactNode }) {
         openCheckout: (candidateId, action, amount) =>
           setCheckout({ candidateId, action, amount }),
         openLogin: () => setLogin(true),
+        logout,
         api,
         notification,
         supabase,

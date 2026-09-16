@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownLeft,
@@ -12,6 +13,7 @@ import {
   Flag,
   History,
   Info,
+  LogOut,
   Medal,
   ShieldCheck,
   Trophy,
@@ -791,10 +793,27 @@ export function TransactionTable({
 }
 
 export function AccountPage() {
-  const { user, board, api, openLogin } = useRace();
+  const { user, board, api, openLogin, logout } = useRace();
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const signOut = async () => {
+    setLoggingOut(true);
+    setLogoutError(null);
+    try {
+      await logout();
+      router.replace("/");
+      router.refresh();
+    } catch (e) {
+      setLogoutError(
+        e instanceof Error ? e.message : "Não foi possível sair da conta.",
+      );
+      setLoggingOut(false);
+    }
+  };
   useEffect(() => {
     if (!user || user.anonymous) return;
     let active = true;
@@ -845,6 +864,25 @@ export function AccountPage() {
         </section>
       ) : (
         <>
+          <section className="sec-panel sec-account-profile">
+            <div className="sec-account-identity">
+              <UserRound size={24} />
+              <div>
+                <span>CONTA CONECTADA</span>
+                <strong>{user.name}</strong>
+                {user.email && <small>{user.email}</small>}
+              </div>
+            </div>
+            <button
+              className="sec-button sec-button-danger"
+              disabled={loggingOut}
+              onClick={() => void signOut()}
+            >
+              <LogOut size={16} />
+              {loggingOut ? "Saindo…" : "Sair da conta"}
+            </button>
+            {logoutError && <p className="sec-account-error">{logoutError}</p>}
+          </section>
           <section className="sec-panel" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,marginBottom:14}}>
             <div><strong>PROGRAMA DE CRIADORES</strong><p style={{margin:"6px 0 0"}}>Crie seu link, acompanhe indicações e comissões diretas.</p></div>
             <Link className="sec-button sec-button-primary" href="/creator">Abrir painel <ArrowRight size={16}/></Link>
