@@ -116,7 +116,9 @@ export async function requireAdmin(req: NextRequest) {
 export function cookie(response: NextResponse, id: string) {
   response.cookies.set("corrida_session", signSession(id), {
     httpOnly: true,
-    secure: process.env.APP_ORIGIN?.startsWith("https:") ?? false,
+    secure:
+      mode() === "production" ||
+      (process.env.APP_ORIGIN?.startsWith("https:") ?? false),
     sameSite: "lax",
     path: "/",
     maxAge: 30 * 86400,
@@ -125,10 +127,22 @@ export function cookie(response: NextResponse, id: string) {
 }
 export function checkOrigin(req: NextRequest) {
   const origin = req.headers.get("origin");
-  const allowed = process.env.APP_ORIGIN || new URL(req.url).origin;
-  if (mode() === "production" && !process.env.APP_ORIGIN)
+  const configured = process.env.APP_ORIGIN?.trim();
+  const vercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  const allowed = new Set<string>();
+  if (configured) allowed.add(new URL(configured).origin);
+  if (vercelProduction)
+    allowed.add(
+      new URL(
+        vercelProduction.startsWith("http")
+          ? vercelProduction
+          : `https://${vercelProduction}`,
+      ).origin,
+    );
+  if (mode() !== "production") allowed.add(new URL(req.url).origin);
+  if (mode() === "production" && !allowed.size)
     throw new ApiError(503, "Origem de produção não configurada.");
-  if (!origin || origin !== allowed)
+  if (!origin || !allowed.has(origin))
     throw new ApiError(403, "Origem da requisição não autorizada.");
   const size = Number(req.headers.get("content-length") || 0);
   if (size > 20000) throw new ApiError(413, "Requisição muito grande.");

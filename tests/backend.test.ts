@@ -509,6 +509,39 @@ test("signed session refuses modification and origins block cross-site writes", 
     /não autorizada/,
   );
 });
+test("production accepts the trusted Vercel project origin when APP_ORIGIN is absent", () => {
+  const previousMode = process.env.APP_MODE;
+  const previousOrigin = process.env.APP_ORIGIN;
+  const previousVercelOrigin = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  try {
+    process.env.APP_MODE = "production";
+    delete process.env.APP_ORIGIN;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "corrida26.vercel.app";
+    checkOrigin(
+      new NextRequest("https://corrida26.vercel.app/api/auth/logout", {
+        method: "POST",
+        headers: { origin: "https://corrida26.vercel.app" },
+      }),
+    );
+    assert.throws(
+      () =>
+        checkOrigin(
+          new NextRequest("https://corrida26.vercel.app/api/auth/logout", {
+            method: "POST",
+            headers: { origin: "https://evil.example" },
+          }),
+        ),
+      /não autorizada/,
+    );
+  } finally {
+    process.env.APP_MODE = previousMode;
+    if (previousOrigin === undefined) delete process.env.APP_ORIGIN;
+    else process.env.APP_ORIGIN = previousOrigin;
+    if (previousVercelOrigin === undefined)
+      delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    else process.env.VERCEL_PROJECT_PRODUCTION_URL = previousVercelOrigin;
+  }
+});
 test("database rate limit is shared and enforced", async () => {
   await rateLimit(db, "test-limit", 2);
   await rateLimit(db, "test-limit", 2);
