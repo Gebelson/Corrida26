@@ -37,10 +37,16 @@ body {
 }
 .site-background {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: max(100vh, 760px);
+  height: max(100dvh, 760px);
   z-index: 0;
   pointer-events: none;
-  background-image: url("/corrida-fundo.webp");
+  background-image:
+    linear-gradient(to bottom, transparent 64%, var(--bg) 100%),
+    url("/corrida-fundo.webp");
   background-repeat: no-repeat;
   background-position: center top;
   background-size: cover;
