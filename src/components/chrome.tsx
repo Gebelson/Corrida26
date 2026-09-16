@@ -92,6 +92,8 @@ export function Footer() {
           <Link href="/regras">
             Regras do jogo <ArrowUpRight size={14} />
           </Link>
+          <Link href="/privacidade">Privacidade</Link>
+          <Link href="/termos">Termos</Link>
           <Link href="/admin">Administração</Link>
           <span>© 2026 CORRIDA 26</span>
         </div>
