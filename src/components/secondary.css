@@ -394,6 +394,14 @@
   font-size: 9px;
   margin-top: 1px;
 }
+.sec-position.tied {
+  width: 44px;
+  color: #91a2ba;
+}
+.sec-position.tied small {
+  font-size: 7px;
+  letter-spacing: 0.4px;
+}
 .sec-position.pos-1 {
   color: #ff5565;
 }

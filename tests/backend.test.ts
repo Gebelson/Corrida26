@@ -197,6 +197,9 @@ test("third place enters top two; leader then changes; deterministic ties preser
   board = await getBoard(db);
   assert.equal(board.candidates[0].id, "lula");
   assert.equal(board.candidates[0].points, board.candidates[1].points);
+  assert.equal(board.candidates[0].position, board.candidates[1].position);
+  assert.equal(board.candidates[0].tied, true);
+  assert.equal(board.candidates[1].tied, true);
   assert.ok(board.events.some((e) => e.kind === "tie"));
 });
 test("removal applies a negative immutable delta and rankings remain sorted", async () => {

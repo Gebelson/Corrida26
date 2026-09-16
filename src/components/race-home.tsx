@@ -120,7 +120,9 @@ function RaceTrack({
       <div className="track-heading">
         <div>
           <div className="track-name">
-            <span className="position-number">0{index + 1}</span>
+            <span className={`position-number ${candidate.tied ? "tied" : ""}`}>
+              {candidate.tied ? "EMPATE" : String(candidate.position).padStart(2, "0")}
+            </span>
             <h2>{candidate.name}</h2>
             {index === 0 && (
               <span className="leader-badge">
@@ -309,7 +311,9 @@ function Challenger({ candidate }: { candidate: Candidate }) {
       style={{ "--candidate-color": candidate.color } as CSSProperties}
     >
       <div className="challenger-top">
-        <span className="small-position">{candidate.position}º LUGAR</span>
+        <span className="small-position">
+          {candidate.tied ? "EMPATADO" : `${candidate.position}º LUGAR`}
+        </span>
         <ArrowUpRight size={16} />
       </div>
       <div className="challenger-identity">
@@ -324,7 +328,13 @@ function Challenger({ candidate }: { candidate: Candidate }) {
       <p className="top2-gap">
         <Flame size={13} />
         <span>
-          Faltam <b>{number(candidate.gapToTop2)}</b> para o Top 2
+          {candidate.tied ? (
+            "Mesma pontuação do Top 2"
+          ) : (
+            <>
+              Faltam <b>{number(candidate.gapToTop2)}</b> para o Top 2
+            </>
+          )}
         </span>
       </p>
       <button

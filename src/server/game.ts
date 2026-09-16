@@ -39,7 +39,11 @@ export function getPresentationBoard(now = new Date()): Board {
       color,
       avatar: `/runners.webp#${index}`,
       points,
-      position: index + 1,
+      position:
+        demoCandidates.filter((candidate) => candidate[4] > points).length + 1,
+      tied:
+        demoCandidates.filter((candidate) => candidate[4] === points).length >
+        1,
       active: true,
       gapToLeader: Math.max(0, leader - points),
       gapToTop2: index < 2 ? 0 : Math.max(1, second - points + 1),
@@ -99,22 +103,33 @@ export async function standings(
     (sum, r) => sum + Math.max(0, Number(r.points)),
     0,
   );
-  return rows.map((r) => ({
-    id: String(r.id),
-    name: String(r.name),
-    shortName: String(r.short_name),
-    color: String(r.color),
-    avatar: String(r.avatar),
-    points: Number(r.points),
-    position: r.active ? active.indexOf(r) + 1 : 0,
-    active: Boolean(r.active),
-    gapToLeader: Math.max(0, top - Number(r.points)),
-    gapToTop2:
-      active.indexOf(r) < 2 && r.active
-        ? 0
-        : Math.max(1, second - Number(r.points) + 1),
-    percentage: total ? (Math.max(0, Number(r.points)) / total) * 100 : 0,
-  }));
+  return rows.map((r) => {
+    const points = Number(r.points);
+    const activeIndex = active.indexOf(r);
+    const sameScore = active.filter(
+      (candidate) => Number(candidate.points) === points,
+    ).length;
+    return {
+      id: String(r.id),
+      name: String(r.name),
+      shortName: String(r.short_name),
+      color: String(r.color),
+      avatar: String(r.avatar),
+      points,
+      position: r.active
+        ? active.filter((candidate) => Number(candidate.points) > points)
+            .length + 1
+        : 0,
+      tied: Boolean(r.active) && sameScore > 1,
+      active: Boolean(r.active),
+      gapToLeader: Math.max(0, top - points),
+      gapToTop2:
+        activeIndex < 2 && r.active
+          ? 0
+          : Math.max(1, second - points + 1),
+      percentage: total ? (Math.max(0, points) / total) * 100 : 0,
+    };
+  });
 }
 export async function getBoard(db?: Queryable): Promise<Board> {
   db ??= await getDB();

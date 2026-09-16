@@ -466,6 +466,11 @@ svg {
   color: rgba(var(--accent-rgb), 0.55);
   font-weight: 600;
 }
+.position-number.tied {
+  font-family: "Inter Variable", sans-serif;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
 .track-name h2 {
   color: var(--accent);
   font-size: 25px;

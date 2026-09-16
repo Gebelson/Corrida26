@@ -173,25 +173,32 @@ export function RankingPage() {
       ) : (
         <>
           <div className="sec-podium">
-            {candidates.slice(0, 3).map((c, i) => (
+            {candidates.slice(0, 3).map((c) => (
               <motion.article
                 layout={!reduced}
                 key={c.id}
-                className={`sec-podium-card sec-place-${i + 1}`}
+                className={`sec-podium-card ${c.tied ? "sec-place-tied" : `sec-place-${c.position}`}`}
                 style={
                   {
-                    "--candidate":
-                      i === 0 ? "#ff414f" : i === 1 ? "#16aafa" : c.color,
+                    "--candidate": c.tied
+                      ? c.color
+                      : c.position === 1
+                        ? "#ff414f"
+                        : c.position === 2
+                          ? "#16aafa"
+                          : c.color,
                   } as CSSProperties
                 }
                 transition={{ duration: 0.4 }}
               >
                 <span className="sec-podium-position">
-                  0{i + 1}
+                  {c.tied ? "EMPATE" : String(c.position).padStart(2, "0")}
                   <small>
-                    {i === 0
-                      ? "NA FRENTE"
-                      : i === 1
+                    {c.tied
+                      ? "MESMA PONTUAÇÃO"
+                      : c.position === 1
+                        ? "NA FRENTE"
+                        : c.position === 2
                         ? "NO CONFRONTO"
                         : "DE OLHO NO TOP 2"}
                   </small>
@@ -236,19 +243,27 @@ export function RankingPage() {
                   transition={{ duration: 0.45, ease: "easeOut" }}
                 >
                   <div className="sec-rank-person">
-                    <span className={`sec-position pos-${c.position}`}>
-                      {c.position <= 3 ? (
+                    <span
+                      className={`sec-position pos-${c.position} ${c.tied ? "tied" : ""}`}
+                    >
+                      {c.tied ? (
+                        <span>—</span>
+                      ) : c.position <= 3 ? (
                         <Medal size={21} />
                       ) : (
                         <span>{String(c.position).padStart(2, "0")}</span>
                       )}
-                      <small>{c.position <= 3 ? `${c.position}º` : ""}</small>
+                      <small>
+                        {c.tied ? "EMPATE" : c.position <= 3 ? `${c.position}º` : ""}
+                      </small>
                     </span>
                     <CandidateAvatar candidate={c} />
                     <div>
                       <h3>{c.name}</h3>
                       <span>
-                        {c.position <= 2
+                        {c.tied
+                          ? "Mesma pontuação"
+                          : c.position <= 2
                           ? "No confronto principal"
                           : `${c.position}º lugar`}
                       </span>
@@ -276,7 +291,9 @@ export function RankingPage() {
                   </div>
                   <span className="sec-gap">
                     <small>PARA O LÍDER</small>
-                    {c.position === 1 ? (
+                    {c.tied ? (
+                      <span className="sec-success">Empate</span>
+                    ) : c.position === 1 ? (
                       <span className="sec-success">Líder</span>
                     ) : (
                       `${number(c.gapToLeader)} pts`
@@ -284,7 +301,9 @@ export function RankingPage() {
                   </span>
                   <span className="sec-gap">
                     <small>PARA O TOP 2</small>
-                    {c.position <= 2 ? (
+                    {c.tied ? (
+                      <span className="sec-success">Empate</span>
+                    ) : c.position <= 2 ? (
                       <span className="sec-success">
                         <Check size={13} /> Top 2
                       </span>
@@ -310,9 +329,9 @@ export function RankingPage() {
           </section>
           <p className="sec-footnote">
             <Info size={15} />
-            Empates são resolvidos pela ordem de cadastro dos candidatos. O
-            percentual considera apenas os saldos positivos de pontos internos
-            da plataforma.
+            Candidatos com a mesma pontuação compartilham a posição. Com todos
+            em zero, todos aparecem como empatados. O percentual considera
+            apenas os saldos positivos de pontos internos da plataforma.
           </p>
         </>
       )}
@@ -602,7 +621,7 @@ export function RulesPage() {
           {
             n: "04",
             title: "Uma corrida em tempo real",
-            text: "O ranking e o Top 2 são recalculados a cada movimentação. Em empate, a ordem de cadastro define a posição. Para ultrapassar, é necessário pelo menos 1 ponto a mais. Retiradas podem levar o saldo abaixo de zero. Os percentuais consideram somente os saldos positivos.",
+            text: "O ranking e o Top 2 são recalculados a cada movimentação. Candidatos com a mesma quantidade de pontos compartilham a posição; a ordem de cadastro apenas organiza a exibição. Para ultrapassar, é necessário pelo menos 1 ponto a mais. Retiradas podem levar o saldo abaixo de zero. Os percentuais consideram somente os saldos positivos.",
           },
         ].map((item) => (
           <section className="sec-panel sec-rule" key={item.n}>

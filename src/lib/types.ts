@@ -7,6 +7,7 @@ export interface Candidate {
   avatar: string;
   points: number;
   position: number;
+  tied: boolean;
   active: boolean;
   gapToLeader: number;
   gapToTop2: number;

@@ -354,7 +354,9 @@ export function AdminPage() {
                         className={!c.active ? "hidden-candidate" : ""}
                       >
                         <span className="sec-admin-position">
-                          {c.active ? String(c.position).padStart(2, "0") : "—"}
+                          {c.active && !c.tied
+                            ? String(c.position).padStart(2, "0")
+                            : "—"}
                         </span>
                         <CandidateAvatar candidate={c} />
                         <div className="sec-admin-candidate-copy">
