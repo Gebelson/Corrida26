@@ -27,16 +27,29 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
-  background:
-    radial-gradient(ellipse 52% 650px at -15% 280px, #7520302b, transparent),
-    radial-gradient(ellipse 58% 740px at 110% 350px, #0061a530, transparent),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: "Inter Variable", Arial, sans-serif;
   font-size: 14px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   padding-bottom: 54px;
+}
+.site-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("/corrida-fundo.webp");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+}
+.site-layer {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 button,
 input,
@@ -1706,10 +1719,6 @@ svg {
 @media (max-width: 620px) {
   body {
     padding-bottom: 73px;
-    background:
-      radial-gradient(ellipse 90% 600px at -30% 190px, #80243529, transparent),
-      radial-gradient(ellipse 100% 550px at 135% 220px, #0067a332, transparent),
-      var(--bg);
   }
   .site-header {
     padding: 0 18px;

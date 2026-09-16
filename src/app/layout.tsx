@@ -23,14 +23,17 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" data-scroll-behavior="smooth">
       <body>
-        <a className="skip-link" href="#main-content">
-          Pular para o conteúdo
-        </a>
-        <RaceProvider>
-          <Header />
-          <div id="main-content">{children}</div>
-          <Footer />
-        </RaceProvider>
+        <div className="site-background" aria-hidden="true" />
+        <div className="site-layer">
+          <a className="skip-link" href="#main-content">
+            Pular para o conteúdo
+          </a>
+          <RaceProvider>
+            <Header />
+            <div id="main-content">{children}</div>
+            <Footer />
+          </RaceProvider>
+        </div>
       </body>
     </html>
   );
