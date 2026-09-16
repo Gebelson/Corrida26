@@ -137,6 +137,24 @@ test("sandbox seeds an immutable ledger matching all initial scores", async () =
     board.candidates.reduce((sum, c) => sum + c.points, 0),
   );
 });
+test("equal scores use the requested candidate display order", async () => {
+  const tiedDb = await createLocalDatabase();
+  try {
+    await tiedDb.query("UPDATE candidate_scores SET points=0");
+    const board = await getBoard(tiedDb);
+    assert.deepEqual(
+      board.candidates.map((candidate) => candidate.id),
+      ["lula", "flavio", "renan", "augusto", "caiado", "zema"],
+    );
+    assert.ok(
+      board.candidates.every(
+        (candidate) => candidate.position === 1 && candidate.tied,
+      ),
+    );
+  } finally {
+    await tiedDb.close();
+  }
+});
 test("pending and failed payments never alter points; duplicate payment confirmations do so once", async () => {
   const initial = (await getBoard(db)).candidates.find(
     (c) => c.id === "lula",

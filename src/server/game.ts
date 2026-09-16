@@ -94,7 +94,7 @@ export async function standings(
   all = false,
 ): Promise<Candidate[]> {
   const { rows } = await db.query(
-    `SELECT c.*,s.points FROM candidates c JOIN candidate_scores s ON s.candidate_id=c.id ${all ? "" : "WHERE c.active=true"} ORDER BY s.points DESC,c.created_at,c.id`,
+    `SELECT c.*,s.points FROM candidates c JOIN candidate_scores s ON s.candidate_id=c.id ${all ? "" : "WHERE c.active=true"} ORDER BY s.points DESC,CASE c.id WHEN 'lula' THEN 1 WHEN 'flavio' THEN 2 WHEN 'renan' THEN 3 WHEN 'augusto' THEN 4 WHEN 'caiado' THEN 5 WHEN 'zema' THEN 6 ELSE 1000 END,c.created_at,c.id`,
   );
   const active = rows.filter((r) => r.active);
   const top = Number(active[0]?.points || 0);
