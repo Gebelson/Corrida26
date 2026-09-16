@@ -18,14 +18,13 @@ export function Header() {
     <>
       <header className="site-header">
         <Link href="/" className="brand" aria-label="CORRIDA 26 — início">
-          <span className="brand-stripes">
-            <i />
-            <i />
-            <i />
-          </span>
-          <span>
-            CORRIDA<span className="brand-year">26</span>
-          </span>
+          <Image
+            src="/logo-corrida26.png"
+            alt=""
+            width={247}
+            height={55}
+            priority
+          />
         </Link>
         <nav aria-label="Navegação principal">
           {[
@@ -85,7 +84,12 @@ export function Footer() {
     <>
       <footer className="site-footer">
         <div>
-          <Image src="/logo.svg" alt="CORRIDA 26" width={155} height={52} />
+          <Image
+            src="/logo-corrida26.png"
+            alt="CORRIDA 26"
+            width={247}
+            height={55}
+          />
           <p>A disputa acontece aqui. Os pontos também.</p>
         </div>
         <div>

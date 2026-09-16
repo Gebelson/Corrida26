@@ -144,34 +144,14 @@ svg {
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-style: italic;
-  font-size: 29px;
-  font-weight: 850;
-  letter-spacing: -1.4px;
-  white-space: nowrap;
-  line-height: 1;
+  width: 217px;
+  height: 55px;
+  flex: 0 0 auto;
 }
-.brand-year {
-  color: #ff2949;
-  margin-left: 2px;
-}
-.brand-stripes {
-  display: flex;
-  gap: 4px;
-  transform: skewX(-23deg);
-  margin-right: 4px;
-}
-.brand-stripes i {
-  height: 24px;
-  width: 7px;
-  background: #a7c9f2;
-}
-.brand-stripes i:nth-child(2) {
-  background: #ff304c;
-}
-.brand-stripes i:nth-child(3) {
-  background: #258cff;
+.brand img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .site-header nav {
   display: flex;
@@ -1653,7 +1633,8 @@ svg {
     margin-right: 10px;
   }
   .brand {
-    font-size: 26px;
+    width: 205px;
+    height: auto;
   }
   .system-bar {
     padding-left: 24px;
@@ -1739,16 +1720,8 @@ svg {
     gap: 15px;
   }
   .brand {
-    font-size: 24px;
-    gap: 7px;
-    letter-spacing: -1px;
-  }
-  .brand-stripes {
-    gap: 3px;
-  }
-  .brand-stripes i {
-    height: 21px;
-    width: 6px;
+    width: 188px;
+    height: auto;
   }
   .login-button {
     padding: 7px 12px;
