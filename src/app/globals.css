@@ -434,7 +434,7 @@ svg {
   gap: 12px;
 }
 .race-track {
-  height: 196px;
+  height: 248px;
   border-radius: 12px;
   border: 1px solid rgba(var(--accent-rgb), 0.2);
   position: relative;
@@ -1623,7 +1623,7 @@ svg {
     padding-top: 39px;
   }
   .race-track {
-    height: 204px;
+    height: 256px;
   }
   .runner-wrap {
     height: 168px;
@@ -1886,7 +1886,7 @@ svg {
     gap: 10px;
   }
   .race-track {
-    height: 176px;
+    height: 220px;
     border-radius: 10px;
   }
   .track-heading {

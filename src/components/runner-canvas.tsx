@@ -7,8 +7,8 @@ export const runnerTilesets: Record<string, string> = {
   lula: "/runners/lula.webp",
   flavio: "/runners/flavio.webp",
   renan: "/runners/renan.webp",
-  augusto: "/runners/augusto.webp",
-  caiado: "/runners/caiado.webp",
+  augusto: "/runners/caiado.webp",
+  caiado: "/runners/augusto.webp",
   zema: "/runners/zema.webp",
 };
 
