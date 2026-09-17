@@ -22,7 +22,12 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useRace } from "./race-provider";
-import { RunnerCanvas, runnerTilesets, RUNNER_CONFIG } from "./runner-canvas";
+import {
+  RunnerCanvas,
+  runnerAvatars,
+  runnerTilesets,
+  RUNNER_CONFIG,
+} from "./runner-canvas";
 import { Candidate, number, money } from "@/lib/types";
 export function Counter({ value }: { value: number }) {
   const [display, setDisplay] = useState(value);
@@ -59,14 +64,15 @@ export function Avatar({
     return (
       <RunnerCanvas candidateId={candidate.id} candidateName={candidate.name} />
     );
-  if (candidate.id === "renan")
+  const runnerAvatar = runnerAvatars[candidate.id];
+  if (runnerAvatar)
     return (
       <span
         role="img"
         aria-label={`Caricatura de ${candidate.name}`}
         className="avatar-sprite"
         style={{
-          backgroundImage: "url(/runners/renan-avatar.webp)",
+          backgroundImage: `url(${runnerAvatar})`,
           backgroundPosition: "center bottom",
           backgroundSize: "contain",
         }}

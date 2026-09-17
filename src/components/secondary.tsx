@@ -21,6 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useRace } from "@/components/race-provider";
+import { runnerAvatars } from "@/components/runner-canvas";
 import {
   type Candidate,
   type HistoryPoint,
@@ -49,6 +50,7 @@ export function CandidateAvatar({
   const index = cell ? Number(cell[1]) : 0;
   const safeImage =
     candidate.avatar && /^(https?:\/\/|\/(?!\/))/.test(candidate.avatar);
+  const runnerAvatar = candidate.id ? runnerAvatars[candidate.id] : undefined;
   return (
     <span
       role="img"
@@ -57,9 +59,9 @@ export function CandidateAvatar({
       style={
         {
           "--avatar-color": candidate.color,
-          ...(candidate.id === "renan"
+          ...(runnerAvatar
             ? {
-                backgroundImage: "url(/runners/renan-avatar.webp)",
+                backgroundImage: `url(${runnerAvatar})`,
                 backgroundSize: "contain",
                 backgroundPosition: "center bottom",
               }

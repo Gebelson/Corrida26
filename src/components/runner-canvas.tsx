@@ -12,6 +12,15 @@ export const runnerTilesets: Record<string, string> = {
   zema: "/runners/zema.webp",
 };
 
+export const runnerAvatars: Record<string, string> = {
+  lula: "/runners/lula-avatar.webp",
+  flavio: "/runners/flavio-avatar.webp",
+  renan: "/runners/renan-avatar.webp",
+  augusto: "/runners/augusto-avatar.webp",
+  caiado: "/runners/caiado-avatar.webp",
+  zema: "/runners/zema-avatar.webp",
+};
+
 const initialFrames: Record<string, number> = {
   lula: 0,
   flavio: 3,
