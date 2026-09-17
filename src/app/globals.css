@@ -2068,6 +2068,18 @@ svg {
   .challengers-section {
     margin-top: 32px;
   }
+  .challengers-section > .section-header {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+  }
+  .challengers-section > .section-header p {
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .challengers-section > .section-header > a {
+    justify-content: center;
+  }
   .section-header {
     align-items: flex-start;
     gap: 13px;
