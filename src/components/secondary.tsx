@@ -313,7 +313,11 @@ export function RankingPage() {
                     <small>PARA O TOP 2</small>
                     {c.tied ? (
                       <span className="sec-success">Empate</span>
-                    ) : c.position <= 2 ? (
+                    ) : c.position === 1 ? (
+                      <span className="sec-success">
+                        <Check size={13} /> Top 1
+                      </span>
+                    ) : c.position === 2 ? (
                       <span className="sec-success">
                         <Check size={13} /> Top 2
                       </span>
