@@ -412,6 +412,10 @@ function mapLevel(row: Record<string, unknown>): CreatorLevel {
 
 export async function creatorDashboard(db: Database, userId: string): Promise<Record<string, unknown>> {
   const user = await ensureCreatorProfile(db, userId);
+  const settingsRow = (await db.query("SELECT value FROM site_settings WHERE id=1")).rows[0];
+  const program = (
+    settingsRow?.value as { creatorProgram?: CreatorProgramSettings } | undefined
+  )?.creatorProgram;
   const profile = (await db.query("SELECT * FROM creator_profiles WHERE user_id=$1", [userId])).rows[0];
   const levels = (await db.query("SELECT * FROM creator_levels WHERE active=true ORDER BY sort_order")).rows;
   const key = monthKey();
@@ -457,7 +461,7 @@ export async function creatorDashboard(db: Database, userId: string): Promise<Re
     db.query("SELECT * FROM creator_notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 20", [userId]),
     db.query(`SELECT c.*,COALESCE(p.progress,0) progress,p.completed_at,p.claimed_at FROM creator_challenges c LEFT JOIN creator_challenge_progress p ON p.challenge_id=c.id AND p.user_id=$1 WHERE c.active=true AND c.ends_at>=now() ORDER BY c.ends_at`, [userId]),
   ]);
-  return { summary, levels: levels.map(mapLevel), commissions: commissions.rows, referrals: referrals.rows, ledger: ledger.rows, withdrawals: withdrawals.rows, notifications: notifications.rows, challenges: challenges.rows };
+  return { summary, levels: levels.map(mapLevel), program, commissions: commissions.rows, referrals: referrals.rows, ledger: ledger.rows, withdrawals: withdrawals.rows, notifications: notifications.rows, challenges: challenges.rows };
 }
 
 export async function creatorLeaderboard(db: Queryable) {

@@ -61,3 +61,482 @@
     border-radius: 15px;
   }
 }
+
+.creator-level-badge {
+  --level: #19a7ff;
+  display: inline-grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  border: 1px solid color-mix(in srgb, var(--level) 48%, #26394f);
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--level) 15%, #0b1726),
+    #08121f
+  );
+  color: #eef7ff;
+  padding: 9px 11px;
+  box-shadow: inset 0 0 22px color-mix(in srgb, var(--level) 6%, transparent);
+}
+.creator-level-badge > i {
+  width: 34px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--level);
+  background: color-mix(in srgb, var(--level) 12%, #07111d);
+  border: 1px solid color-mix(in srgb, var(--level) 48%, #24364b);
+  clip-path: polygon(50% 0, 92% 18%, 92% 68%, 50% 100%, 8% 68%, 8% 18%);
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--level) 34%, transparent));
+}
+.creator-level-badge > i svg {
+  width: 17px;
+  height: 17px;
+}
+.creator-level-badge > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.creator-level-badge > span small {
+  color: color-mix(in srgb, var(--level) 72%, #879bb2);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+.creator-level-badge > span strong {
+  color: #f4f8ff;
+  font: 750 17px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.5px;
+  margin: 0;
+  text-transform: uppercase;
+}
+.creator-level-badge > b {
+  color: var(--level);
+  font: 800 20px "Barlow Condensed", sans-serif;
+  margin: 0;
+}
+.creator-level-badge.current {
+  box-shadow:
+    inset 0 0 25px color-mix(in srgb, var(--level) 10%, transparent),
+    0 0 22px color-mix(in srgb, var(--level) 10%, transparent);
+}
+.creator-level-badge.prominent {
+  width: 100%;
+  padding: 12px;
+}
+.creator-level-badge.prominent > i {
+  width: 42px;
+  height: 46px;
+}
+.level-card .creator-level-badge {
+  margin: 11px 0 8px;
+}
+.level-card .creator-level-badge > span,
+.level-card .creator-level-badge > span small {
+  display: flex;
+}
+.level-card .creator-level-badge > span strong {
+  display: block;
+  font-size: 20px;
+  margin: 0;
+}
+.level-card .creator-level-badge > b {
+  display: block;
+  font-size: 24px;
+}
+.level-line {
+  gap: 7px;
+  align-items: stretch;
+}
+.level-line .creator-level-badge {
+  min-width: 0;
+  flex: 1;
+  padding: 6px 7px;
+  gap: 5px;
+  opacity: 0.58;
+}
+.level-line .creator-level-badge.current {
+  opacity: 1;
+}
+.level-line .creator-level-badge > i {
+  width: 25px;
+  height: 28px;
+}
+.level-line .creator-level-badge > span {
+  display: flex;
+  gap: 0;
+}
+.level-line .creator-level-badge > span small {
+  display: none;
+}
+.level-line .creator-level-badge > span strong {
+  font-size: 12px;
+}
+.level-line .creator-level-badge > b {
+  font-size: 14px;
+}
+
+.creator-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.guide-heading,
+.guide-section-title {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 28px;
+  align-items: end;
+  border: 1px solid #20344c;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 18%, #19a7ff18, transparent 30%),
+    linear-gradient(145deg, #0c1828ee, #07111ddd);
+  padding: 28px;
+  overflow: hidden;
+}
+.guide-heading h2,
+.guide-section-title h2 {
+  max-width: 750px;
+  margin: 9px 0 8px;
+  font: 800 clamp(30px, 4vw, 48px)/0.96 "Barlow Condensed", sans-serif;
+  letter-spacing: -0.5px;
+}
+.guide-heading p,
+.guide-section-title p {
+  max-width: 650px;
+  margin: 0;
+  color: #8ea4bc;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.earning-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.flow-item {
+  position: relative;
+  min-width: 0;
+}
+.flow-item > article {
+  position: relative;
+  min-height: 220px;
+  height: 100%;
+  border: 1px solid #20344a;
+  border-radius: 16px;
+  background: linear-gradient(155deg, #0d1b2ccc, #07111ddd);
+  padding: 21px;
+}
+.flow-item > svg {
+  position: absolute;
+  z-index: 2;
+  right: -19px;
+  top: 48%;
+  width: 18px;
+  color: #49627e;
+}
+.flow-number {
+  position: absolute;
+  right: 16px;
+  top: 13px;
+  color: #344b65;
+  font: 800 24px "Barlow Condensed", sans-serif;
+}
+.flow-item article > i {
+  width: 49px;
+  height: 49px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #1d5d7d;
+  border-radius: 13px;
+  color: #32baff;
+  background: #0a2638;
+  box-shadow: 0 0 24px #13adff17;
+}
+.flow-item article > i svg {
+  width: 22px;
+}
+.flow-item h3 {
+  margin: 22px 0 8px;
+  font: 750 21px/1 "Barlow Condensed", sans-serif;
+  text-transform: uppercase;
+}
+.flow-item p {
+  margin: 0;
+  color: #8197af;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.earning-example {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 26px;
+  align-items: center;
+  border: 1px solid #2b4561;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, #ff2d4710, transparent 38%, #14adff0f),
+    #0a1625;
+  padding: 25px 28px;
+}
+.example-figure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.example-figure > span {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #2e4966;
+  border-radius: 50%;
+  color: #a9c2da;
+  background: #0d2033;
+}
+.example-figure > span.example-coin {
+  color: #53e0b7;
+  border-color: #28715f;
+  background: #0a2a24;
+}
+.example-figure > i {
+  color: #425b76;
+}
+.example-figure svg {
+  width: 19px;
+}
+.example-copy > span,
+.example-equation small {
+  color: #7890aa;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+}
+.example-copy h3 {
+  margin: 5px 0;
+  font: 750 25px "Barlow Condensed", sans-serif;
+}
+.example-copy p {
+  margin: 0;
+  color: #91a6bd;
+  font-size: 12px;
+}
+.example-copy strong {
+  color: var(--cyan);
+}
+.example-equation {
+  min-width: 225px;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: baseline;
+  gap: 8px;
+  border-left: 1px solid #263b54;
+  padding-left: 25px;
+}
+.example-equation span,
+.example-equation i {
+  color: #91a6bd;
+  font: 700 20px "Barlow Condensed", sans-serif;
+  font-style: normal;
+}
+.example-equation b {
+  color: #55dfb6;
+  font: 800 30px "Barlow Condensed", sans-serif;
+}
+.example-equation small {
+  grid-column: 1/-1;
+  text-align: right;
+}
+.guide-section-title {
+  align-items: center;
+  margin-top: 8px;
+  background: linear-gradient(145deg, #0b1726dd, #07111ddd);
+}
+.guide-section-title h2 {
+  font-size: clamp(26px, 3vw, 38px);
+}
+.guide-section-title > p {
+  max-width: 260px;
+  text-align: right;
+}
+.level-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.level-badges-grid > article {
+  border: 1px solid color-mix(in srgb, var(--level) 32%, #26384d);
+  border-radius: 16px;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--level) 8%, #0b1726),
+    #07111d
+  );
+  padding: 17px;
+}
+.level-badges-grid > article.active {
+  border-color: color-mix(in srgb, var(--level) 65%, #fff);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--level) 13%, transparent);
+}
+.level-badges-grid .creator-level-badge {
+  width: 100%;
+  min-width: 0;
+}
+.level-badges-grid > article > p {
+  min-height: 32px;
+  margin: 15px 2px;
+  color: #7f95ad;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.level-badges-grid > article > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 1px solid #1e3044;
+  padding-top: 12px;
+}
+.level-badges-grid > article > div span {
+  color: #7288a0;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+}
+.level-badges-grid > article > div strong {
+  color: var(--level);
+  font: 800 31px "Barlow Condensed", sans-serif;
+}
+.guide-rules {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.guide-rules article {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #1d3047;
+  border-radius: 13px;
+  background: #091522;
+  padding: 15px;
+}
+.guide-rules svg {
+  flex: none;
+  width: 20px;
+  color: #35bbff;
+}
+.guide-rules div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.guide-rules b {
+  font: 750 18px "Barlow Condensed", sans-serif;
+}
+.guide-rules span {
+  color: #7b91a8;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.guide-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: #70869e;
+  font-size: 10px;
+  line-height: 1.65;
+}
+.guide-note svg {
+  flex: none;
+  width: 16px;
+  color: #55dfb6;
+}
+
+@media (max-width: 900px) {
+  .earning-flow,
+  .level-badges-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .flow-item:nth-child(2) > svg {
+    display: none;
+  }
+  .guide-rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .earning-example {
+    grid-template-columns: auto 1fr;
+  }
+  .example-equation {
+    grid-column: 1/-1;
+    border-top: 1px solid #263b54;
+    border-left: 0;
+    padding: 17px 0 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .creator-level-badge.prominent {
+    width: auto;
+  }
+  .level-card .creator-level-badge.prominent {
+    width: 100%;
+  }
+  .level-line {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .level-line .creator-level-badge {
+    width: 100%;
+  }
+  .guide-heading,
+  .guide-section-title {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 22px 18px;
+  }
+  .guide-heading h2,
+  .guide-section-title h2 {
+    font-size: 34px;
+  }
+  .guide-section-title > p {
+    max-width: none;
+    text-align: left;
+  }
+  .earning-flow,
+  .level-badges-grid {
+    grid-template-columns: 1fr;
+  }
+  .flow-item > article {
+    min-height: 0;
+    padding: 18px;
+  }
+  .flow-item > svg,
+  .flow-item:nth-child(2) > svg {
+    display: block;
+    right: 50%;
+    top: auto;
+    bottom: -19px;
+    transform: translateX(50%) rotate(90deg);
+  }
+  .earning-example {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 21px 18px;
+  }
+  .example-figure {
+    justify-content: center;
+  }
+  .example-equation {
+    min-width: 0;
+  }
+  .example-equation small {
+    text-align: left;
+  }
+  .guide-rules {
+    grid-template-columns: 1fr;
+  }
+}
