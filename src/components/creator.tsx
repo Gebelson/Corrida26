@@ -60,7 +60,7 @@ export function CreatorDashboardPage() {
   if (!data) return <main className="creator-shell creator-gate"><LoaderCircle className="spin"/><p>Preparando seu painel…</p></main>;
   const s = data.summary;
   const program = data.program || defaultProgram;
-  const tabs = [["overview","Visão geral"],["guide","Como funciona"],["referrals","Indicados"],["commissions","Comissões"],["wallet","Carteira"],["missions","Missões"]];
+  const tabs = [["overview","Visão geral"],["referrals","Indicados"],["commissions","Comissões"],["wallet","Carteira"],["missions","Missões"],["guide","Como funciona"]];
   return <main className="creator-shell">
     <section className="creator-hero"><div><span className="eyebrow">CENTRAL DO CRIADOR</span><h1>SEU LINK. SUA TORCIDA.<br/><em>SUA COMISSÃO.</em></h1><p>Comissão direta sobre participações elegíveis dos seus indicados durante {program.commissionDays} dias.</p></div><div className="level-card" style={{"--level":s.level.color} as React.CSSProperties}><span>NÍVEL ATUAL</span><LevelBadge level={s.level} current prominent/><b>{s.level.commissionPercent}%</b><small>de comissão por pagamento válido</small></div></section>
     <section className="referral-box"><div><Link2/><span>SEU LINK EXCLUSIVO</span><strong>{s.referralUrl}</strong></div><button onClick={async()=>{await navigator.clipboard.writeText(s.referralUrl);setCopied(true);setTimeout(()=>setCopied(false),1800)}}>{copied?<Check/>:<Copy/>}{copied?"Copiado":"Copiar link"}</button><a href={`https://wa.me/?text=${encodeURIComponent(`Entre na CORRIDA 26 pelo meu link: ${s.referralUrl}`)}`} target="_blank" rel="noopener noreferrer">Compartilhar</a></section>
