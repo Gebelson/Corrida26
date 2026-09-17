@@ -7,6 +7,7 @@ import type {
   Transaction,
   SessionUser,
   HistoryPoint,
+  RankingEvent,
 } from "../lib/types";
 import {
   defaults,
@@ -595,17 +596,28 @@ export async function getHistory(db: Queryable, range: string) {
         : range === "30D"
           ? 7200
           : 86400;
-  const { rows } = await db.query(
-    `SELECT DISTINCT ON (floor(extract(epoch FROM created_at)/$2)) scores,created_at FROM ranking_history WHERE created_at>=$1::timestamptz ORDER BY floor(extract(epoch FROM created_at)/$2),created_at DESC`,
-    [since, bucket],
-  );
-  const baseline = (
-    await db.query(
-      "SELECT scores,created_at FROM ranking_history WHERE created_at<$1::timestamptz ORDER BY created_at DESC LIMIT 1",
-      [since],
-    )
-  ).rows;
-  const points: HistoryPoint[] = [...baseline, ...rows].map((r) => ({
+  const [bucketed, baselineResult, persistedEvents, recentSnapshots, candidates] =
+    await Promise.all([
+      db.query(
+        `SELECT DISTINCT ON (floor(extract(epoch FROM created_at)/$2)) scores,created_at FROM ranking_history WHERE created_at>=$1::timestamptz ORDER BY floor(extract(epoch FROM created_at)/$2),created_at DESC`,
+        [since, bucket],
+      ),
+      db.query(
+        "SELECT scores,created_at FROM ranking_history WHERE created_at<$1::timestamptz ORDER BY created_at DESC LIMIT 1",
+        [since],
+      ),
+      db.query(
+        "SELECT * FROM ranking_events WHERE created_at>=$1::timestamptz ORDER BY created_at DESC LIMIT 100",
+        [since],
+      ),
+      db.query(
+        "SELECT scores,created_at FROM ranking_history WHERE created_at>=$1::timestamptz ORDER BY created_at DESC LIMIT 250",
+        [since],
+      ),
+      db.query("SELECT id,name,created_at FROM candidates"),
+    ]);
+  const baseline = baselineResult.rows;
+  const points: HistoryPoint[] = [...baseline, ...bucketed.rows].map((r) => ({
     timestamp: timestamp(r.created_at),
     scores: Object.fromEntries(
       Object.entries(r.scores as Record<string, number>).map(([id, score]) => [
@@ -614,18 +626,126 @@ export async function getHistory(db: Queryable, range: string) {
       ]),
     ),
   }));
-  const events = (
-    await db.query(
-      "SELECT * FROM ranking_events WHERE created_at>=$1::timestamptz ORDER BY created_at DESC LIMIT 100",
-      [since],
-    )
-  ).rows.map((r) => ({
+  const events: RankingEvent[] = persistedEvents.rows.map((r) => ({
     id: String(r.id),
     kind: String(r.kind),
     message: String(r.message),
     createdAt: timestamp(r.created_at),
   }));
-  return { points, events };
+  const inferred = inferRankingEvents(
+    [...baseline, ...recentSnapshots.rows],
+    candidates.rows,
+    Date.parse(since),
+  );
+  for (const event of inferred) {
+    const alreadyPersisted = events.some(
+      (saved) =>
+        saved.kind === event.kind &&
+        saved.message === event.message &&
+        Math.abs(Date.parse(saved.createdAt) - Date.parse(event.createdAt)) <=
+          5 * 60 * 1000,
+    );
+    if (!alreadyPersisted) events.push(event);
+  }
+  events.sort(
+    (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
+  );
+  return { points, events: events.slice(0, 100) };
+}
+
+type RankingSnapshotRow = {
+  scores: Record<string, number>;
+  created_at: unknown;
+};
+type CandidateHistoryRow = { id: unknown; name: unknown; created_at: unknown };
+const preferredCandidateOrder = new Map(
+  ["lula", "flavio", "renan", "augusto", "caiado", "zema"].map(
+    (id, index) => [id, index],
+  ),
+);
+
+function inferRankingEvents(
+  snapshots: Record<string, unknown>[],
+  candidateRows: Record<string, unknown>[],
+  since: number,
+): RankingEvent[] {
+  const candidates = new Map(
+    (candidateRows as CandidateHistoryRow[]).map((candidate) => [
+      String(candidate.id),
+      {
+        name: String(candidate.name),
+        createdAt: timestamp(candidate.created_at),
+      },
+    ]),
+  );
+  const ordered = (snapshots as RankingSnapshotRow[])
+    .map((row) => ({ ...row, at: Date.parse(timestamp(row.created_at)) }))
+    .sort((left, right) => left.at - right.at);
+  const rank = (scores: Record<string, number>) =>
+    Object.entries(scores)
+      .map(([id, value]) => ({
+        id,
+        name: candidates.get(id)?.name || id,
+        points: Number(value),
+        createdAt: candidates.get(id)?.createdAt || "",
+      }))
+      .sort(
+        (left, right) =>
+          right.points - left.points ||
+          (preferredCandidateOrder.get(left.id) ?? 1000) -
+            (preferredCandidateOrder.get(right.id) ?? 1000) ||
+          left.createdAt.localeCompare(right.createdAt) ||
+          left.id.localeCompare(right.id),
+      );
+  const events: RankingEvent[] = [];
+  const add = (
+    index: number,
+    kind: string,
+    message: string,
+    createdAt: string,
+  ) =>
+    events.push({
+      id: `derived-${index}-${kind}-${createdAt}`,
+      kind,
+      message,
+      createdAt,
+    });
+  for (let index = 1; index < ordered.length; index += 1) {
+    const current = ordered[index];
+    if (current.at < since) continue;
+    const before = rank(ordered[index - 1].scores);
+    const after = rank(current.scores);
+    const createdAt = new Date(current.at).toISOString();
+    if (after[0] && before[0]?.id !== after[0].id)
+      add(
+        index,
+        "leadership",
+        `${after[0].name} assumiu a liderança`,
+        createdAt,
+      );
+    if (after[1] && before[1]?.id !== after[1].id) {
+      const entered = !before.slice(0, 2).some(({ id }) => id === after[1].id);
+      add(
+        index,
+        "top2",
+        `${after[1].name} ${entered ? "entrou no Top 2" : "assumiu a segunda posição"}`,
+        createdAt,
+      );
+    }
+    if (
+      after[0] &&
+      after[1] &&
+      after[0].points === after[1].points &&
+      before[0]?.points !== before[1]?.points
+    )
+      add(
+        index,
+        "tie",
+        `${after[0].name} e ${after[1].name} empataram na liderança`,
+        createdAt,
+      );
+  }
+  return events;
 }
 export async function adminDashboard(db: Queryable) {
   const values = (

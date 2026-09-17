@@ -392,6 +392,40 @@ test("history and percentage derive from persisted snapshots; ledger equals scor
   assert.equal(mismatch.rows.length, 0);
   assert.ok(board.movements.length <= 6);
 });
+test("history reconstructs missing position moments from immutable snapshots", async () => {
+  const historyDb = await createLocalDatabase();
+  try {
+    const changedAt = new Date(Date.now() + 1000).toISOString();
+    await historyDb.query(
+      "INSERT INTO ranking_history(id,scores,created_at) VALUES($1,$2::jsonb,$3::timestamptz)",
+      [
+        "history-without-events",
+        JSON.stringify({
+          lula: 190000,
+          flavio: 200000,
+          renan: 115950,
+          augusto: 82300,
+          caiado: 57420,
+          zema: 42180,
+        }),
+        changedAt,
+      ],
+    );
+    const history = await getHistory(historyDb, "24H");
+    assert.ok(
+      history.events.some(
+        (event) => event.message === "Flávio Bolsonaro assumiu a liderança",
+      ),
+    );
+    assert.ok(
+      history.events.some(
+        (event) => event.message === "Lula assumiu a segunda posição",
+      ),
+    );
+  } finally {
+    await historyDb.close();
+  }
+});
 test("DePix webhook signature rejects forged, altered, and stale events", () => {
   const secret = "test-secret";
   const eventId = "event-123";
