@@ -8,6 +8,7 @@ import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
+  BadgeDollarSign,
   Check,
   Clock3,
   Flag,
@@ -900,12 +901,31 @@ export function AccountPage() {
             {logoutError && <p className="sec-account-error">{logoutError}</p>}
           </section>
           <section className="sec-panel sec-creator-promo">
+            <span className="sec-creator-promo-icon" aria-hidden="true">
+              <BadgeDollarSign />
+            </span>
             <div className="sec-creator-promo-copy">
-              <h2>PROGRAMA DE CRIADORES</h2>
-              <p>Crie seu link, acompanhe indicações e comissões diretas.</p>
+              <span className="sec-creator-promo-kicker">
+                PROGRAMA DE CRIADORES
+              </span>
+              <h2>
+                GANHE DINHEIRO <em>INDICANDO</em>
+              </h2>
+              <p>
+                Compartilhe seu link e receba comissão direta pelas
+                participações elegíveis e confirmadas dos seus indicados.
+              </p>
+              <div className="sec-creator-promo-benefits">
+                <span>
+                  <Check size={12} /> Link exclusivo
+                </span>
+                <span>
+                  <Check size={12} /> Comissões acompanhadas
+                </span>
+              </div>
             </div>
             <Link className="sec-button sec-button-primary" href="/creator">
-              Abrir painel <ArrowRight size={16} />
+              Quero começar <ArrowRight size={16} />
             </Link>
           </section>
           <div className="sec-account-stats">
