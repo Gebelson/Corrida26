@@ -30,6 +30,71 @@ const initialFrames: Record<string, number> = {
   zema: 7,
 };
 
+const frameAnchors: Record<string, ReadonlyArray<readonly [number, number]>> = {
+  lula: [
+    [186, 508],
+    [204, 504],
+    [191.5, 508],
+    [192, 508],
+    [178, 477],
+    [194.5, 477],
+    [178.5, 477],
+    [188, 478],
+  ],
+  flavio: [
+    [179, 505],
+    [189.5, 501],
+    [182.5, 506],
+    [177.5, 504],
+    [168.5, 478],
+    [188.5, 481],
+    [172.5, 479],
+    [176.5, 480],
+  ],
+  renan: [
+    [199, 501],
+    [196, 499],
+    [198.5, 504],
+    [191, 502],
+    [183.5, 468],
+    [189, 468],
+    [187, 468],
+    [190.5, 466],
+  ],
+  augusto: [
+    [186.5, 504],
+    [198.5, 502],
+    [189, 504],
+    [193, 506],
+    [185, 479],
+    [191, 478],
+    [187.5, 480],
+    [193, 474],
+  ],
+  caiado: [
+    [181.5, 506],
+    [194.5, 502],
+    [190, 507],
+    [180.5, 504],
+    [175, 470],
+    [190, 472],
+    [181.5, 471],
+    [181, 469],
+  ],
+  zema: [
+    [191, 505],
+    [192, 505],
+    [195.5, 506],
+    [187.5, 505],
+    [185.5, 482],
+    [189, 483],
+    [184, 482],
+    [183.5, 484],
+  ],
+};
+
+const stableAnchor = { x: 192, feet: 500 } as const;
+
 export const RUNNER_CONFIG = {
   columns: 4,
   rows: 2,
@@ -69,6 +134,13 @@ export function RunnerCanvas({
     let frameHeight = canvas.height;
 
     const drawFrame = () => {
+      const anchor = frameAnchors[candidateId]?.[frameIndex];
+      const offsetX = anchor
+        ? Math.round((stableAnchor.x - anchor[0]) * RUNNER_CONFIG.scale)
+        : 0;
+      const offsetY = anchor
+        ? Math.round((stableAnchor.feet - anchor[1]) * RUNNER_CONFIG.scale)
+        : 0;
       context.clearRect(0, 0, frameWidth, frameHeight);
       context.drawImage(
         image,
@@ -80,8 +152,8 @@ export function RunnerCanvas({
           RUNNER_CONFIG.trim,
         sourceWidth,
         sourceHeight,
-        0,
-        0,
+        offsetX,
+        offsetY,
         frameWidth,
         frameHeight,
       );
