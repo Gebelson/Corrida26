@@ -351,7 +351,7 @@ export function RankingPage() {
 
 export function HistoryPage() {
   const { board, api } = useRace();
-  const [range, setRange] = useState("24H");
+  const [range, setRange] = useState("7D");
   const [data, setData] = useState<{
     points: HistoryPoint[];
     events: RankingEvent[];
