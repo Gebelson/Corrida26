@@ -360,6 +360,10 @@ export function HistoryPage() {
   const [busy, setBusy] = useState(true);
   const [retry, setRetry] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
+  const scoreRevision =
+    board?.candidates
+      .map((candidate) => `${candidate.id}:${candidate.points}`)
+      .join("|") ?? "";
   useEffect(() => {
     let active = true;
     setBusy(true);
@@ -381,7 +385,7 @@ export function HistoryPage() {
     return () => {
       active = false;
     };
-  }, [api, range, board?.updatedAt, retry]);
+  }, [api, range, scoreRevision, retry]);
   const candidates = board?.candidates.filter((c) => c.active) ?? [];
   const visible = candidates.filter(
     (c) => selected.length === 0 || selected.includes(c.id),

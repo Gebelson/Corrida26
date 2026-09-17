@@ -22,6 +22,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useRace } from "./race-provider";
+import type { ScoreBurst } from "./race-provider";
 import {
   RunnerCanvas,
   runnerAvatars,
@@ -106,6 +107,41 @@ export function Avatar({
     </span>
   );
 }
+
+function PointBurst({
+  burst,
+  compact = false,
+}: {
+  burst?: ScoreBurst;
+  compact?: boolean;
+}) {
+  const reduced = useReducedMotion();
+  return (
+    <AnimatePresence mode="popLayout">
+      {burst && (
+        <motion.div
+          key={burst.id}
+          className={`point-pop ${compact ? "compact" : ""} ${burst.delta < 0 ? "loss" : "gain"}`}
+          role="status"
+          aria-live="polite"
+          aria-label={`${burst.delta > 0 ? "Mais" : "Menos"} ${number(Math.abs(burst.delta))} pontos`}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, x: -10, y: 10, scale: 0.72 }}
+          animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: -24, scale: 0.88 }}
+          transition={{ duration: reduced ? 0.15 : 0.38, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <i aria-hidden="true" />
+          <strong>
+            {burst.delta > 0 ? "+" : "−"}
+            {number(Math.abs(burst.delta))}
+          </strong>
+          <em>PONTOS</em>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function RaceTrack({
   candidate,
   opponent,
@@ -115,16 +151,8 @@ function RaceTrack({
   opponent: Candidate;
   index: number;
 }) {
-  const [delta, setDelta] = useState(0);
-  const prior = useRef(candidate.points);
-  useEffect(() => {
-    if (prior.current !== candidate.points) {
-      setDelta(candidate.points - prior.current);
-      prior.current = candidate.points;
-      const t = setTimeout(() => setDelta(0), 1800);
-      return () => clearTimeout(t);
-    }
-  }, [candidate.points]);
+  const { scoreBursts } = useRace();
+  const burst = scoreBursts[candidate.id];
   const gap = Math.abs(candidate.points - opponent.points);
   const relative =
     Math.max(0, candidate.points) /
@@ -134,7 +162,7 @@ function RaceTrack({
       layout
       layoutId={`track-${candidate.id}`}
       transition={{ duration: 0.5 }}
-      className={`race-track ${index === 0 ? "red" : "blue"} ${delta < 0 ? "point-loss" : ""}`}
+      className={`race-track ${index === 0 ? "red" : "blue"} ${burst && burst.delta < 0 ? "point-loss" : ""}`}
     >
       <div className="track-heading">
         <div>
@@ -180,20 +208,7 @@ function RaceTrack({
       >
         <div className="speed-lines" />
         <Avatar candidate={candidate} runner />
-        <AnimatePresence>
-          {!!delta && (
-            <motion.span
-              key={candidate.points}
-              className="point-pop"
-              initial={{ opacity: 0, y: 0, scale: 0.8 }}
-              animate={{ opacity: 1, y: -35, scale: 1 }}
-              exit={{ opacity: 0, y: -60 }}
-            >
-              {delta > 0 ? "+" : ""}
-              {number(delta)}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <PointBurst burst={burst} />
       </motion.div>
     </motion.article>
   );
@@ -321,7 +336,7 @@ function Status({ first, second }: { first: Candidate; second: Candidate }) {
   );
 }
 function Challenger({ candidate }: { candidate: Candidate }) {
-  const { openCheckout } = useRace();
+  const { openCheckout, scoreBursts } = useRace();
   return (
     <motion.article
       layout
@@ -336,7 +351,10 @@ function Challenger({ candidate }: { candidate: Candidate }) {
         <ArrowUpRight size={16} />
       </div>
       <div className="challenger-identity">
-        <Avatar candidate={candidate} />
+        <div className="challenger-avatar-wrap">
+          <Avatar candidate={candidate} />
+          <PointBurst burst={scoreBursts[candidate.id]} compact />
+        </div>
         <div>
           <h3>{candidate.name}</h3>
           <span>

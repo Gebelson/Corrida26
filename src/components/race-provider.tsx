@@ -12,6 +12,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { Action, Board, SessionUser } from "@/lib/types";
 import { CheckoutModal, LoginModal } from "./transaction-modals";
 type Checkout = { candidateId: string; action: Action; amount?: number };
+export type ScoreBurst = { id: number; delta: number };
 type Context = {
   board: Board | null;
   user: SessionUser | null;
@@ -24,6 +25,7 @@ type Context = {
   logout: () => Promise<void>;
   api: <T>(url: string, options?: RequestInit) => Promise<T>;
   notification: string | null;
+  scoreBursts: Record<string, ScoreBurst | undefined>;
   supabase: SupabaseClient | null;
 };
 const RaceContext = createContext<Context | null>(null);
@@ -46,8 +48,14 @@ export function RaceProvider({ children }: { children: ReactNode }) {
     [authConfigured, setAuthConfigured] = useState(false),
     [checkout, setCheckout] = useState<Checkout | null>(null),
     [login, setLogin] = useState(false),
-    [notification, setNotification] = useState<string | null>(null);
+    [notification, setNotification] = useState<string | null>(null),
+    [scoreBursts, setScoreBursts] = useState<
+      Record<string, ScoreBurst | undefined>
+    >({});
   const prior = useRef<string[]>([]),
+    priorScores = useRef<Record<string, number> | null>(null),
+    burstSequence = useRef(0),
+    burstTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()),
     mounted = useRef(true);
   const supabase = getAuth();
   const api = useCallback(
@@ -90,6 +98,40 @@ export function RaceProvider({ children }: { children: ReactNode }) {
         else if (prior.current[1] !== ids[1]) setNotification("🔥 NOVO TOP 2");
       }
       prior.current = ids;
+      const nextScores = Object.fromEntries(
+        next.candidates.map((candidate) => [candidate.id, candidate.points]),
+      );
+      if (priorScores.current) {
+        const bursts: Record<string, ScoreBurst> = {};
+        for (const candidate of next.candidates) {
+          const previous = priorScores.current[candidate.id];
+          if (previous === undefined || previous === candidate.points) continue;
+          bursts[candidate.id] = {
+            id: ++burstSequence.current,
+            delta: candidate.points - previous,
+          };
+        }
+        if (Object.keys(bursts).length) {
+          setScoreBursts((current) => ({ ...current, ...bursts }));
+          for (const [candidateId, burst] of Object.entries(bursts)) {
+            const previousTimer = burstTimers.current.get(candidateId);
+            if (previousTimer) clearTimeout(previousTimer);
+            burstTimers.current.set(
+              candidateId,
+              setTimeout(() => {
+                setScoreBursts((current) => {
+                  if (current[candidateId]?.id !== burst.id) return current;
+                  const nextBursts = { ...current };
+                  delete nextBursts[candidateId];
+                  return nextBursts;
+                });
+                burstTimers.current.delete(candidateId);
+              }, 2400),
+            );
+          }
+        }
+      }
+      priorScores.current = nextScores;
       setBoard(next);
       setUser(session.user);
       setAuthConfigured(session.authConfigured);
@@ -137,6 +179,8 @@ export function RaceProvider({ children }: { children: ReactNode }) {
       mounted.current = false;
       clearInterval(timer);
       window.removeEventListener("focus", wake);
+      for (const timer of burstTimers.current.values()) clearTimeout(timer);
+      burstTimers.current.clear();
     };
   }, [refresh]);
   useEffect(() => {
@@ -177,6 +221,7 @@ export function RaceProvider({ children }: { children: ReactNode }) {
         logout,
         api,
         notification,
+        scoreBursts,
         supabase,
       }}
     >

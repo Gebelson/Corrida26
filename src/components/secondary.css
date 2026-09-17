@@ -497,10 +497,6 @@
 }
 .sec-chart {
   padding: 30px 12px 0;
-  transition: opacity 0.2s;
-}
-.sec-chart[aria-busy="true"] {
-  opacity: 0.5;
 }
 .sec-chart svg {
   width: 100%;
