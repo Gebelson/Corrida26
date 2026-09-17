@@ -579,6 +579,7 @@ svg {
   transform: translateX(-50%);
   z-index: 1;
   pointer-events: none;
+  will-change: left;
 }
 .runner-sprite {
   display: block;
@@ -601,6 +602,10 @@ svg {
   height: 100%;
   filter: drop-shadow(0 0 15px rgba(var(--accent-rgb), 0.22));
   z-index: 1;
+  image-rendering: auto;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: contents;
 }
 .speed-lines {
   position: absolute;

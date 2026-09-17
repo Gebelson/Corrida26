@@ -94,6 +94,7 @@ const frameAnchors: Record<string, ReadonlyArray<readonly [number, number]>> = {
 };
 
 const stableAnchor = { x: 192, feet: 500 } as const;
+const frameBlendStart = 0.82;
 
 export const RUNNER_CONFIG = {
   columns: 4,
@@ -126,28 +127,30 @@ export function RunnerCanvas({
     const image = new window.Image();
     let animationFrame = 0;
     let stopped = false;
-    let frameIndex = initialFrames[candidateId] ?? 0;
-    let lastFrameTime = performance.now();
+    const initialFrame = initialFrames[candidateId] ?? 0;
+    let frameIndex = initialFrame;
+    let animationStartedAt = performance.now();
     let sourceWidth = canvas.width;
     let sourceHeight = canvas.height;
     let frameWidth = canvas.width;
     let frameHeight = canvas.height;
+    let renderScale: number = RUNNER_CONFIG.scale;
 
-    const drawFrame = () => {
-      const anchor = frameAnchors[candidateId]?.[frameIndex];
+    const drawPose = (index: number, opacity = 1) => {
+      const anchor = frameAnchors[candidateId]?.[index];
       const offsetX = anchor
-        ? Math.round((stableAnchor.x - anchor[0]) * RUNNER_CONFIG.scale)
+        ? (stableAnchor.x - anchor[0]) * renderScale
         : 0;
       const offsetY = anchor
-        ? Math.round((stableAnchor.feet - anchor[1]) * RUNNER_CONFIG.scale)
+        ? (stableAnchor.feet - anchor[1]) * renderScale
         : 0;
-      context.clearRect(0, 0, frameWidth, frameHeight);
+      context.globalAlpha = opacity;
       context.drawImage(
         image,
-        (frameIndex % RUNNER_CONFIG.columns) *
+        (index % RUNNER_CONFIG.columns) *
           (image.naturalWidth / RUNNER_CONFIG.columns) +
           RUNNER_CONFIG.trim,
-        Math.floor(frameIndex / RUNNER_CONFIG.columns) *
+        Math.floor(index / RUNNER_CONFIG.columns) *
           (image.naturalHeight / RUNNER_CONFIG.rows) +
           RUNNER_CONFIG.trim,
         sourceWidth,
@@ -157,18 +160,32 @@ export function RunnerCanvas({
         frameWidth,
         frameHeight,
       );
+    };
+
+    const drawFrame = (blend = 0) => {
+      const nextFrame = (frameIndex + 1) % RUNNER_CONFIG.frameCount;
+      context.clearRect(0, 0, frameWidth, frameHeight);
+      drawPose(frameIndex, 1 - blend);
+      if (blend > 0) drawPose(nextFrame, blend);
+      context.globalAlpha = 1;
       canvas.dataset.frame = String(frameIndex);
+      canvas.dataset.frameBlend = blend.toFixed(2);
     };
 
     const animate = (now: number) => {
       if (stopped) return;
       const frameDuration = 1000 / RUNNER_CONFIG.fps;
-      const elapsedFrames = Math.floor((now - lastFrameTime) / frameDuration);
-      if (elapsedFrames > 0) {
-        frameIndex = (frameIndex + elapsedFrames) % RUNNER_CONFIG.frameCount;
-        lastFrameTime += elapsedFrames * frameDuration;
-        drawFrame();
-      }
+      const timeline = (now - animationStartedAt) / frameDuration;
+      const wholeFrames = Math.floor(timeline);
+      const frameProgress = timeline - wholeFrames;
+      frameIndex =
+        (initialFrame + wholeFrames) % RUNNER_CONFIG.frameCount;
+      const rawBlend = Math.max(
+        0,
+        (frameProgress - frameBlendStart) / (1 - frameBlendStart),
+      );
+      const smoothBlend = rawBlend * rawBlend * (3 - 2 * rawBlend);
+      drawFrame(smoothBlend);
       animationFrame = requestAnimationFrame(animate);
     };
 
@@ -178,10 +195,17 @@ export function RunnerCanvas({
         image.naturalWidth / RUNNER_CONFIG.columns - RUNNER_CONFIG.trim * 2;
       sourceHeight =
         image.naturalHeight / RUNNER_CONFIG.rows - RUNNER_CONFIG.trim * 2;
-      frameWidth = Math.round(sourceWidth * RUNNER_CONFIG.scale);
-      frameHeight = Math.round(sourceHeight * RUNNER_CONFIG.scale);
+      renderScale = Math.min(
+        1,
+        RUNNER_CONFIG.scale * Math.max(1, window.devicePixelRatio || 1),
+      );
+      frameWidth = Math.round(sourceWidth * renderScale);
+      frameHeight = Math.round(sourceHeight * renderScale);
       canvas.width = frameWidth;
       canvas.height = frameHeight;
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      animationStartedAt = performance.now();
       drawFrame();
       if (!reducedMotion) animationFrame = requestAnimationFrame(animate);
     };

@@ -27,7 +27,6 @@ import {
   RunnerCanvas,
   runnerAvatars,
   runnerTilesets,
-  RUNNER_CONFIG,
 } from "./runner-canvas";
 import { Candidate, number, money } from "@/lib/types";
 export function Counter({ value }: { value: number }) {
@@ -202,8 +201,10 @@ function RaceTrack({
         className="runner-wrap"
         animate={{ left: `${20 + relative * 48}%` }}
         transition={{
-          duration: 160 / RUNNER_CONFIG.speed,
-          ease: [0.22, 1, 0.36, 1],
+          type: "spring",
+          stiffness: 92,
+          damping: 22,
+          mass: 0.72,
         }}
       >
         <div className="speed-lines" aria-hidden="true">
