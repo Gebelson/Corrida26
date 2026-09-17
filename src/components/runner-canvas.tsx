@@ -94,7 +94,6 @@ const frameAnchors: Record<string, ReadonlyArray<readonly [number, number]>> = {
 };
 
 const stableAnchor = { x: 192, feet: 500 } as const;
-const frameBlendStart = 0.82;
 
 export const RUNNER_CONFIG = {
   columns: 4,
@@ -136,7 +135,7 @@ export function RunnerCanvas({
     let frameHeight = canvas.height;
     let renderScale: number = RUNNER_CONFIG.scale;
 
-    const drawPose = (index: number, opacity = 1) => {
+    const drawPose = (index: number) => {
       const anchor = frameAnchors[candidateId]?.[index];
       const offsetX = anchor
         ? (stableAnchor.x - anchor[0]) * renderScale
@@ -144,7 +143,6 @@ export function RunnerCanvas({
       const offsetY = anchor
         ? (stableAnchor.feet - anchor[1]) * renderScale
         : 0;
-      context.globalAlpha = opacity;
       context.drawImage(
         image,
         (index % RUNNER_CONFIG.columns) *
@@ -162,14 +160,10 @@ export function RunnerCanvas({
       );
     };
 
-    const drawFrame = (blend = 0) => {
-      const nextFrame = (frameIndex + 1) % RUNNER_CONFIG.frameCount;
+    const drawFrame = () => {
       context.clearRect(0, 0, frameWidth, frameHeight);
-      drawPose(frameIndex, 1 - blend);
-      if (blend > 0) drawPose(nextFrame, blend);
-      context.globalAlpha = 1;
+      drawPose(frameIndex);
       canvas.dataset.frame = String(frameIndex);
-      canvas.dataset.frameBlend = blend.toFixed(2);
     };
 
     const animate = (now: number) => {
@@ -177,15 +171,12 @@ export function RunnerCanvas({
       const frameDuration = 1000 / RUNNER_CONFIG.fps;
       const timeline = (now - animationStartedAt) / frameDuration;
       const wholeFrames = Math.floor(timeline);
-      const frameProgress = timeline - wholeFrames;
-      frameIndex =
+      const nextFrame =
         (initialFrame + wholeFrames) % RUNNER_CONFIG.frameCount;
-      const rawBlend = Math.max(
-        0,
-        (frameProgress - frameBlendStart) / (1 - frameBlendStart),
-      );
-      const smoothBlend = rawBlend * rawBlend * (3 - 2 * rawBlend);
-      drawFrame(smoothBlend);
+      if (nextFrame !== frameIndex) {
+        frameIndex = nextFrame;
+        drawFrame();
+      }
       animationFrame = requestAnimationFrame(animate);
     };
 
