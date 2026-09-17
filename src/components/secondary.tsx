@@ -42,7 +42,7 @@ export function CandidateAvatar({
   candidate,
   className = "",
 }: {
-  candidate: Pick<Candidate, "avatar" | "name" | "color">;
+  candidate: Pick<Candidate, "avatar" | "name" | "color"> & { id?: string };
   className?: string;
 }) {
   const cell = /^\/runners\.webp#([0-5])$/.exec(candidate.avatar);
@@ -57,7 +57,13 @@ export function CandidateAvatar({
       style={
         {
           "--avatar-color": candidate.color,
-          ...(cell
+          ...(candidate.id === "renan"
+            ? {
+                backgroundImage: "url(/runners/renan-avatar.webp)",
+                backgroundSize: "contain",
+                backgroundPosition: "center bottom",
+              }
+            : cell
             ? {
                 backgroundImage: "url(/runners.webp)",
                 backgroundSize: "300% 200%",

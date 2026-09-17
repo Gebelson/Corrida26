@@ -59,6 +59,19 @@ export function Avatar({
     return (
       <RunnerCanvas candidateId={candidate.id} candidateName={candidate.name} />
     );
+  if (candidate.id === "renan")
+    return (
+      <span
+        role="img"
+        aria-label={`Caricatura de ${candidate.name}`}
+        className="avatar-sprite"
+        style={{
+          backgroundImage: "url(/runners/renan-avatar.webp)",
+          backgroundPosition: "center bottom",
+          backgroundSize: "contain",
+        }}
+      />
+    );
   const match = candidate.avatar?.match(/#(\d+)$/);
   const index = match
     ? Number(match[1])
