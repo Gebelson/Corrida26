@@ -1734,8 +1734,9 @@ svg {
     gap: 12px;
   }
   .brand {
-    width: clamp(160px, 45vw, 176px);
+    width: clamp(148px, 42vw, 164px);
     height: auto;
+    transform: translateX(-5px);
   }
   .login-button {
     padding: 8px 12px;
