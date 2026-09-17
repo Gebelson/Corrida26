@@ -206,7 +206,14 @@ function RaceTrack({
           ease: [0.22, 1, 0.36, 1],
         }}
       >
-        <div className="speed-lines" />
+        <div className="speed-lines" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
         <Avatar candidate={candidate} runner />
         <PointBurst burst={burst} />
       </motion.div>
