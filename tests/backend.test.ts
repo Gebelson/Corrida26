@@ -36,6 +36,7 @@ import {
   trackReferralClick,
 } from "../src/server/creators";
 import { defaults } from "../src/server/db";
+import { publicAppOrigin } from "../src/server/origin";
 
 process.env.APP_MODE = "sandbox";
 process.env.APP_ORIGIN = "http://localhost:3000";
@@ -574,6 +575,24 @@ test("production accepts the trusted Vercel project origin when APP_ORIGIN is ab
     if (previousVercelOrigin === undefined)
       delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
     else process.env.VERCEL_PROJECT_PRODUCTION_URL = previousVercelOrigin;
+  }
+});
+test("production referral links never use a loopback origin", () => {
+  const previousMode = process.env.APP_MODE;
+  const previousOrigin = process.env.APP_ORIGIN;
+  const previousProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  process.env.APP_MODE = "production";
+  process.env.APP_ORIGIN = "http://127.0.0.1:3000";
+  process.env.VERCEL_PROJECT_PRODUCTION_URL = "corrida26.vercel.app";
+  try {
+    assert.equal(publicAppOrigin(), "https://corrida26.vercel.app");
+  } finally {
+    process.env.APP_MODE = previousMode;
+    if (previousOrigin === undefined) delete process.env.APP_ORIGIN;
+    else process.env.APP_ORIGIN = previousOrigin;
+    if (previousProductionUrl === undefined)
+      delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    else process.env.VERCEL_PROJECT_PRODUCTION_URL = previousProductionUrl;
   }
 });
 test("database rate limit is shared and enforced", async () => {

@@ -4,12 +4,13 @@ import { getDB } from "@/server/db";
 import { getSettings } from "@/server/game";
 import { trackReferralClick } from "@/server/creators";
 import { ipKey, route } from "@/server/security";
+import { publicAppOrigin } from "@/server/origin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const GET = route(async (req, context) => {
   const db = await getDB();
   const settings = await getSettings(db);
-  const origin = process.env.APP_ORIGIN || req.nextUrl.origin;
+  const origin = publicAppOrigin(req.nextUrl.origin);
   if (!settings.creatorProgram.enabled) return NextResponse.redirect(new URL("/", origin));
   const code = (await context!.params).code;
   const result = await trackReferralClick(db, code, {

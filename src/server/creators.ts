@@ -14,6 +14,7 @@ import type {
 } from "../lib/types";
 import type { Database, Queryable } from "./db";
 import { ApiError } from "./errors";
+import { publicAppOrigin } from "./origin";
 
 const monthKey = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -410,7 +411,11 @@ function mapLevel(row: Record<string, unknown>): CreatorLevel {
   };
 }
 
-export async function creatorDashboard(db: Database, userId: string): Promise<Record<string, unknown>> {
+export async function creatorDashboard(
+  db: Database,
+  userId: string,
+  appOrigin = publicAppOrigin(),
+): Promise<Record<string, unknown>> {
   const user = await ensureCreatorProfile(db, userId);
   const settingsRow = (await db.query("SELECT value FROM site_settings WHERE id=1")).rows[0];
   const program = (
@@ -441,7 +446,7 @@ export async function creatorDashboard(db: Database, userId: string): Promise<Re
   };
   const summary: CreatorSummary = {
     code: String(user.referral_code),
-    referralUrl: `${process.env.APP_ORIGIN || "http://127.0.0.1:3000"}/r/${user.referral_code}`,
+    referralUrl: `${appOrigin}/r/${user.referral_code}`,
     level: mapLevel(level), nextLevel: next ? mapLevel(next) : null,
     monthlyRevenue: monthlyRevenue / 100,
     progressPercent: next ? Math.min(100, (monthlyRevenue / cents(next.min_monthly_revenue_cents)) * 100) : 100,
