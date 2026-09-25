@@ -51,6 +51,7 @@ export function CheckoutModal({
       setTransaction(null);
       setError("");
       setBusy(false);
+      setCopied(false);
       key.current = crypto.randomUUID();
     }
   }, [selection]);
@@ -81,6 +82,47 @@ export function CheckoutModal({
     value >= (board?.settings.minAmount || 5) &&
     value <= 10000;
   const canAnonymous = board?.settings.anonymousEnabled;
+  const isMobileCheckout = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 620px)").matches;
+
+  async function copyPixCode(code: string, silent = false) {
+    let copiedSuccessfully = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code);
+        copiedSuccessfully = true;
+      }
+    } catch {
+      copiedSuccessfully = false;
+    }
+
+    if (!copiedSuccessfully) {
+      try {
+        const fallback = document.createElement("textarea");
+        fallback.value = code;
+        fallback.setAttribute("readonly", "");
+        fallback.style.position = "fixed";
+        fallback.style.opacity = "0";
+        document.body.appendChild(fallback);
+        fallback.select();
+        fallback.setSelectionRange(0, code.length);
+        copiedSuccessfully = document.execCommand("copy");
+        fallback.remove();
+      } catch {
+        copiedSuccessfully = false;
+      }
+    }
+
+    if (copiedSuccessfully) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 5000);
+    } else if (!silent) {
+      setError("Toque e segure o código acima para copiá-lo.");
+    }
+    return copiedSuccessfully;
+  }
+
   async function create() {
     setBusy(true);
     setError("");
@@ -97,6 +139,9 @@ export function CheckoutModal({
         }),
       });
       setTransaction(result);
+      if (result.qrCode && isMobileCheckout()) {
+        void copyPixCode(result.qrCode, true);
+      }
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o pagamento.",
@@ -402,22 +447,22 @@ export function CheckoutModal({
                   )}
                   {transaction.qrCode && (
                     <>
+                      <div className="mobile-pix-guide" aria-live="polite">
+                        <span>{copied ? "PIX COPIADO" : "PAGUE NO CELULAR"}</span>
+                        <strong>
+                          {copied
+                            ? "Código pronto para colar no banco."
+                            : "Copie o código e cole no app do seu banco."}
+                        </strong>
+                        <small>No banco, escolha Pix e depois Copia e Cola.</small>
+                      </div>
                       <label className="form-label">
                         Pix copia e cola
                         <textarea readOnly value={transaction.qrCode} />
                       </label>
                       <button
-                        className="button wide"
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(
-                              transaction.qrCode!,
-                            );
-                            setCopied(true);
-                          } catch {
-                            setError("Copie o código no campo acima.");
-                          }
-                        }}
+                        className="button wide pix-copy-button"
+                        onClick={() => void copyPixCode(transaction.qrCode!)}
                       >
                         {copied ? <Check size={16} /> : <Copy size={16} />}{" "}
                         {copied ? "Código copiado" : "Copiar código Pix"}
@@ -425,7 +470,7 @@ export function CheckoutModal({
                     </>
                   )}
                   {transaction.paymentUrl && (
-                    <a className="button button-primary wide" href={transaction.paymentUrl} target="_blank" rel="noopener noreferrer">
+                    <a className="button button-primary wide pix-payment-link" href={transaction.paymentUrl} target="_blank" rel="noopener noreferrer">
                       Abrir pagamento Pix <ArrowUpRight size={16} />
                     </a>
                   )}
