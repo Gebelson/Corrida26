@@ -67,12 +67,16 @@ export async function reconcile(db: Database, row: Record<string, unknown>, rece
   if (mode() === "sandbox" || !row.provider_id) return publicTransaction(row);
   const checkout = unwrapCheckout(await gateway<unknown>(`/api/checkouts/${encodeURIComponent(String(row.provider_id))}`));
   verifyPayment(checkout, row);
+  const providerPayload = {
+    ...((row.provider_payload as Record<string, unknown> | null) || {}),
+    ...checkout,
+  };
   await db.query("UPDATE transactions SET provider_status=$1,provider_live=$2,provider_payload=$3::jsonb,updated_at=now() WHERE id=$4",
-    [checkout.status, Boolean(checkout.is_live), JSON.stringify(checkout), row.id]);
+    [checkout.status, Boolean(checkout.is_live), JSON.stringify(providerPayload), row.id]);
   if (checkout.status === "completed") return settle(db, String(row.id), "paid", receipt);
   if (checkout.status === "refunded") return settle(db, String(row.id), "refunded", receipt);
   if (["cancelled", "expired"].includes(checkout.status)) return settle(db, String(row.id), checkout.status === "expired" ? "expired" : "failed", receipt);
-  return publicTransaction({ ...row, provider_payload: checkout });
+  return publicTransaction({ ...row, provider_payload: providerPayload });
 }
 export function validateWebhook(signature: string | null, eventId: string | null, rawBody: string, secret: string, now = Date.now()) {
   if (!signature || !eventId || eventId.length > 200) throw new ApiError(401, "Assinatura ausente ou inválida.");
