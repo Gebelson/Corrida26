@@ -172,10 +172,12 @@ export function publicTransaction(row: Record<string, unknown>): Transaction {
     };
     date_of_expiration?: string;
     pix?: { qr_code?: string };
+    pix_payload?: string;
     payment_url?: string;
     expires_at?: string;
   } | null;
   const qr = payload?.point_of_interaction?.transaction_data;
+  const pixQrCode = payload?.pix?.qr_code || payload?.pix_payload;
   return {
     id: String(row.id),
     candidateId: String(row.candidate_id),
@@ -184,8 +186,8 @@ export function publicTransaction(row: Record<string, unknown>): Transaction {
     points: Number(row.points),
     status: row.status as Transaction["status"],
     createdAt: timestamp(row.created_at),
-    ...(payload?.pix?.qr_code
-      ? { qrCode: payload.pix.qr_code }
+    ...(pixQrCode
+      ? { qrCode: pixQrCode }
       : qr?.qr_code
         ? { qrCode: qr.qr_code }
         : {}),
