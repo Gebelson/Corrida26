@@ -1644,6 +1644,9 @@ svg {
 .pix-payment {
   text-align: center;
 }
+.mobile-pix-guide {
+  display: none;
+}
 .pix-payment > img {
   margin: 0 auto 18px;
   border: 12px solid white;
@@ -2524,6 +2527,36 @@ svg {
   .legal-fixed a svg {
     width: 13px;
   }
+  .pix-payment > img {
+    display: none;
+  }
+  .mobile-pix-guide {
+    display: grid;
+    gap: 5px;
+    padding: 15px 14px;
+    margin-bottom: 16px;
+    text-align: left;
+    border: 1px solid #315173;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #10233ae8, #0a1727e8);
+    box-shadow: inset 3px 0 0 #24a1ff;
+  }
+  .mobile-pix-guide span { color: #61baff; font-size: 8px; font-weight: 800; letter-spacing: 1.4px; }
+  .mobile-pix-guide strong { color: #f5f8ff; font-size: 14px; line-height: 1.35; }
+  .mobile-pix-guide small { color: #8fa7c2; font-size: 9px; line-height: 1.5; }
+  .pix-payment .form-label { text-align: left; }
+  .pix-payment textarea { min-height: 74px; max-height: 74px; font-size: 11px; line-height: 1.45; }
+  .pix-payment .button { min-height: 52px; margin-top: 12px; }
+  .pix-payment .button + .button,
+  .pix-payment .pix-payment-link { margin-top: 16px; }
+  .pix-payment .pix-copy-button {
+    color: #fff;
+    border-color: #ff4358;
+    background: linear-gradient(135deg, #ff304a, #e72f47);
+    box-shadow: 0 10px 25px #ed30422b;
+  }
+  .pix-payment .pix-payment-link { color: #dceaff; border-color: #38516f; background: #0c1a2b; box-shadow: none; }
+  .awaiting-payment { margin: 20px 0 14px; }
   .dialog-content {
     padding: 28px 23px;
     max-height: 92dvh;
