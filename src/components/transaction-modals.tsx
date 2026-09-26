@@ -39,7 +39,8 @@ export function CheckoutModal({
     [transaction, setTransaction] = useState<Transaction | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [copied, setCopied] = useState(false);
+    [copied, setCopied] = useState(false),
+    [paymentNotice, setPaymentNotice] = useState("");
   const key = useRef("");
   useEffect(() => {
     if (selection) {
@@ -52,6 +53,7 @@ export function CheckoutModal({
       setError("");
       setBusy(false);
       setCopied(false);
+      setPaymentNotice("");
       key.current = crypto.randomUUID();
     }
   }, [selection]);
@@ -123,6 +125,54 @@ export function CheckoutModal({
     return copiedSuccessfully;
   }
 
+  async function openPixOnMobile(code: string, silent = false) {
+    setPaymentNotice("");
+    let copiedSuccessfully = false;
+    let fallback: HTMLTextAreaElement | null = null;
+
+    try {
+      fallback = document.createElement("textarea");
+      fallback.value = code;
+      fallback.setAttribute("readonly", "");
+      fallback.style.position = "fixed";
+      fallback.style.opacity = "0";
+      document.body.appendChild(fallback);
+      fallback.select();
+      fallback.setSelectionRange(0, code.length);
+      copiedSuccessfully = document.execCommand("copy");
+    } catch {
+      copiedSuccessfully = false;
+    } finally {
+      fallback?.remove();
+    }
+
+    if (!copiedSuccessfully) {
+      copiedSuccessfully = await copyPixCode(code, true);
+    } else {
+      setCopied(true);
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Pagamento Pix",
+          text: code,
+        });
+        return;
+      } catch {
+        // O compartilhamento foi cancelado ou recusado pelo navegador.
+      }
+    }
+
+    if (copiedSuccessfully) {
+      setPaymentNotice(
+        "Pix copiado. Abra seu banco e cole o código para pagar.",
+      );
+    } else if (!silent) {
+      setError("Toque e segure o código Pix acima para copiá-lo.");
+    }
+  }
+
   async function create() {
     setBusy(true);
     setError("");
@@ -140,7 +190,7 @@ export function CheckoutModal({
       });
       setTransaction(result);
       if (result.qrCode && isMobileCheckout()) {
-        void copyPixCode(result.qrCode, true);
+        void openPixOnMobile(result.qrCode, true);
       }
     } catch (e) {
       setError(
@@ -469,8 +519,30 @@ export function CheckoutModal({
                       </button>
                     </>
                   )}
+                  {transaction.qrCode && (
+                    <button
+                      type="button"
+                      className="button button-primary wide mobile-bank-action"
+                      onClick={() => void openPixOnMobile(transaction.qrCode!)}
+                    >
+                      {copied
+                        ? "Pix copiado — escolher banco"
+                        : "Copiar Pix e escolher banco"}
+                      <ArrowUpRight size={16} />
+                    </button>
+                  )}
+                  {paymentNotice && (
+                    <p className="inline-success mobile-payment-notice" role="status">
+                      {paymentNotice}
+                    </p>
+                  )}
                   {transaction.paymentUrl && (
-                    <a className="button button-primary wide pix-payment-link" href={transaction.paymentUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className="button button-primary wide desktop-payment-link"
+                      href={transaction.paymentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Abrir pagamento Pix <ArrowUpRight size={16} />
                     </a>
                   )}
