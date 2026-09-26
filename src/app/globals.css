@@ -1644,7 +1644,9 @@ svg {
 .pix-payment {
   text-align: center;
 }
-.mobile-pix-guide {
+.mobile-pix-guide,
+.mobile-bank-action,
+.mobile-payment-notice {
   display: none;
 }
 .pix-payment > img {
@@ -2548,14 +2550,29 @@ svg {
   .pix-payment textarea { min-height: 74px; max-height: 74px; font-size: 11px; line-height: 1.45; }
   .pix-payment .button { min-height: 52px; margin-top: 12px; }
   .pix-payment .button + .button,
-  .pix-payment .pix-payment-link { margin-top: 16px; }
+  .pix-payment .mobile-bank-action { margin-top: 16px; }
   .pix-payment .pix-copy-button {
     color: #fff;
     border-color: #ff4358;
     background: linear-gradient(135deg, #ff304a, #e72f47);
     box-shadow: 0 10px 25px #ed30422b;
   }
-  .pix-payment .pix-payment-link { color: #dceaff; border-color: #38516f; background: #0c1a2b; box-shadow: none; }
+  .pix-payment .mobile-bank-action {
+    display: flex;
+    color: #fff;
+    border-color: #20a778;
+    background: linear-gradient(135deg, #16815e, #0c6c50);
+    box-shadow: 0 10px 25px #0aa87325;
+  }
+  .pix-payment .desktop-payment-link {
+    display: none;
+  }
+  .pix-payment .mobile-payment-notice {
+    display: block;
+    margin: 12px 0 0;
+    text-align: left;
+    line-height: 1.55;
+  }
   .awaiting-payment { margin: 20px 0 14px; }
   .dialog-content {
     padding: 28px 23px;
