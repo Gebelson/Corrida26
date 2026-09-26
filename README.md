@@ -42,6 +42,25 @@ O banco local fica em `.local/db`. Para preservar o histórico, mantenha essa pa
 Para recuperar notificações perdidas ou uma criação de cobrança interrompida, execute `npx tsx scripts/reconcile.ts` em um agendador confiável, com as variáveis do servidor. Ele consulta o provedor novamente, processa até 100 registros por execução e só aplica estados confirmados. O webhook é o caminho principal; a consulta individual da cobrança também reconcilia o estado. Monitore falhas do job e ajuste a frequência/limite ao volume. O job também remove janelas vencidas do rate limit.
 
 
+## Pix direto no banco (mobile)
+
+A integração opcional com a API Pix via Open Finance da Efí usa o BR Code já criado pela DePix. Na primeira participação, o usuário escolhe o banco; a escolha fica somente no navegador e, nas próximas, o botão abre diretamente o fluxo oficial da instituição com o valor preenchido. O usuário sempre revisa e confirma no banco. Se a Efí estiver indisponível, o código Pix é copiado e o fluxo Copia e Cola continua funcionando. No desktop permanecem QR Code e botão de cópia.
+
+A Efí atua apenas como iniciadora: DePix, webhook e conciliação continuam sendo a fonte de verdade para liberar pontos e comissões. A rota `/api/open-finance` valida sessão, propriedade, estado pendente, banco, valor e CPF/CNPJ a partir do banco de dados; usa OAuth2, mTLS, idempotência estável e aceita somente redirecionamentos HTTPS. Nenhum segredo ou certificado chega ao navegador.
+
+Configure primeiro em homologação e habilite na aplicação Efí os escopos `gn.opb.participants.read` e `gn.opb.payment.pix.send`:
+
+```env
+EFI_OPEN_FINANCE_ENABLED=true
+EFI_OPEN_FINANCE_ENV=homologation
+EFI_OPEN_FINANCE_CLIENT_ID=...
+EFI_OPEN_FINANCE_CLIENT_SECRET=...
+EFI_OPEN_FINANCE_P12_BASE64=...
+EFI_OPEN_FINANCE_P12_PASSPHRASE=
+```
+
+Conclua a homologação antes de trocar `EFI_OPEN_FINANCE_ENV` para `production`. O P12 deve ser convertido para Base64 e salvo somente como segredo do servidor.
+
 ## Programa de criadores
 
 Cada conta autenticada pode abrir `/creator` para gerar um link `/r/[codigo]`. A atribuição usa último clique válido por 30 dias e é fixada no primeiro cadastro; não existe segundo nível. Comissões de compras DePix live ficam pendentes por 14 dias, passam a disponíveis pelo job de reconciliação e são estornadas por lançamentos compensatórios quando a compra é devolvida. Os níveis mensais padrão são Iniciante 20%, Creator 25%, Pro 30% e Elite 35%. O cliente indicado recebe crédito interno de 10% na primeira compra, limitado a R$ 20.
