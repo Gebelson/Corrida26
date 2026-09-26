@@ -23,6 +23,12 @@ type Selection = {
   action: Action;
   amount?: number;
 } | null;
+
+type OpenFinanceParticipant = {
+  id: string;
+  name: string;
+  logo?: string;
+};
 export function CheckoutModal({
   selection,
   onClose,
@@ -41,6 +47,9 @@ export function CheckoutModal({
     [error, setError] = useState(""),
     [copied, setCopied] = useState(false),
     [paymentNotice, setPaymentNotice] = useState("");
+  const [participants, setParticipants] = useState<OpenFinanceParticipant[]>([]);
+  const [bankPicker, setBankPicker] = useState(false);
+  const [bankBusy, setBankBusy] = useState(false);
   const key = useRef("");
   useEffect(() => {
     if (selection) {
@@ -54,6 +63,9 @@ export function CheckoutModal({
       setBusy(false);
       setCopied(false);
       setPaymentNotice("");
+      setParticipants([]);
+      setBankPicker(false);
+      setBankBusy(false);
       key.current = crypto.randomUUID();
     }
   }, [selection]);
@@ -84,9 +96,6 @@ export function CheckoutModal({
     value >= (board?.settings.minAmount || 5) &&
     value <= 10000;
   const canAnonymous = board?.settings.anonymousEnabled;
-  const isMobileCheckout = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia("(max-width: 620px)").matches;
 
   async function copyPixCode(code: string, silent = false) {
     let copiedSuccessfully = false;
@@ -173,6 +182,73 @@ export function CheckoutModal({
     }
   }
 
+  async function startBankPayment(participantId: string, code: string) {
+    if (!transaction) return;
+    setBankBusy(true);
+    setError("");
+    setPaymentNotice("Abrindo o ambiente seguro do seu banco…");
+    try {
+      const result = await api<{ redirectURI: string }>("/api/open-finance", {
+        method: "POST",
+        body: JSON.stringify({
+          transactionId: transaction.id,
+          participantId,
+        }),
+      });
+      const target = new URL(result.redirectURI);
+      if (target.protocol !== "https:") throw new Error("Redirecionamento inválido.");
+      try {
+        window.localStorage.setItem("corrida26:open-finance-bank", participantId);
+      } catch {
+        // O pagamento continua mesmo quando o navegador bloqueia armazenamento local.
+      }
+      window.location.assign(target.href);
+    } catch {
+      setBankPicker(false);
+      await openPixOnMobile(code, true);
+      setPaymentNotice(
+        "Não foi possível abrir o banco. Pix copiado — abra seu banco e cole o código para pagar.",
+      );
+    } finally {
+      setBankBusy(false);
+    }
+  }
+
+  async function openPixInBank(code: string) {
+    setBankBusy(true);
+    setError("");
+    setPaymentNotice("");
+    try {
+      const result = await api<{
+        enabled: boolean;
+        participants: OpenFinanceParticipant[];
+      }>("/api/open-finance");
+      if (!result.enabled || !result.participants.length)
+        throw new Error("Open Finance indisponível.");
+      setParticipants(result.participants);
+      let remembered: string | null = null;
+      try {
+        remembered = window.localStorage.getItem("corrida26:open-finance-bank");
+      } catch {
+        remembered = null;
+      }
+      if (remembered && result.participants.some((item) => item.id === remembered)) {
+        setBankBusy(false);
+        await startBankPayment(remembered, code);
+        return;
+      }
+      setBankPicker(true);
+      setPaymentNotice("Escolha seu banco para continuar com o valor já preenchido.");
+    } catch {
+      await openPixOnMobile(code, true);
+      setPaymentNotice(
+        "Pix copiado. Abra seu banco e cole o código para pagar.",
+      );
+    } finally {
+      setBankBusy(false);
+    }
+  }
+
   async function create() {
     setBusy(true);
     setError("");
@@ -189,9 +265,6 @@ export function CheckoutModal({
         }),
       });
       setTransaction(result);
-      if (result.qrCode && isMobileCheckout()) {
-        void openPixOnMobile(result.qrCode, true);
-      }
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Não foi possível gerar o pagamento.",
@@ -498,13 +571,50 @@ export function CheckoutModal({
                   {transaction.qrCode && (
                     <>
                       <div className="mobile-pix-guide" aria-live="polite">
-                        <span>{copied ? "PIX COPIADO" : "PAGUE NO CELULAR"}</span>
-                        <strong>
-                          {copied
-                            ? "Código pronto para colar no banco."
-                            : "Copie o código e cole no app do seu banco."}
-                        </strong>
-                        <small>No banco, escolha Pix e depois Copia e Cola.</small>
+                        {bankPicker ? (
+                          <>
+                            <span>ESCOLHA SEU BANCO</span>
+                            <strong>
+                              O Pix abrirá com {money(transaction.amount)} já preenchidos.
+                            </strong>
+                            <label className="form-label">
+                              Instituição bancária
+                              <select
+                                defaultValue=""
+                                disabled={bankBusy}
+                                onChange={(event) => {
+                                  if (event.target.value)
+                                    void startBankPayment(
+                                      event.target.value,
+                                      transaction.qrCode!,
+                                    );
+                                }}
+                              >
+                                <option value="" disabled>
+                                  Selecione seu banco
+                                </option>
+                                {participants.map((participant) => (
+                                  <option key={participant.id} value={participant.id}>
+                                    {participant.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <small>
+                              Você revisa os dados e confirma o pagamento no ambiente do banco.
+                            </small>
+                          </>
+                        ) : (
+                          <>
+                            <span>{copied ? "PIX COPIADO" : "PAGUE NO CELULAR"}</span>
+                            <strong>
+                              {copied
+                                ? "Código pronto para colar no banco."
+                                : "Abra o Pix com o valor correto no seu banco."}
+                            </strong>
+                            <small>Você sempre revisa e confirma antes de pagar.</small>
+                          </>
+                        )}
                       </div>
                       <label className="form-label">
                         Pix copia e cola
@@ -523,28 +633,21 @@ export function CheckoutModal({
                     <button
                       type="button"
                       className="button button-primary wide mobile-bank-action"
-                      onClick={() => void openPixOnMobile(transaction.qrCode!)}
+                      disabled={bankBusy}
+                      onClick={() => void openPixInBank(transaction.qrCode!)}
                     >
-                      {copied
-                        ? "Pix copiado — escolher banco"
-                        : "Copiar Pix e escolher banco"}
-                      <ArrowUpRight size={16} />
+                      {bankBusy ? (
+                        <LoaderCircle className="spin" size={16} />
+                      ) : (
+                        <ArrowUpRight size={16} />
+                      )}
+                      {bankBusy ? "Conectando ao banco…" : "Abrir pagamento Pix"}
                     </button>
                   )}
                   {paymentNotice && (
                     <p className="inline-success mobile-payment-notice" role="status">
                       {paymentNotice}
                     </p>
-                  )}
-                  {transaction.paymentUrl && (
-                    <a
-                      className="button button-primary wide desktop-payment-link"
-                      href={transaction.paymentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Abrir pagamento Pix <ArrowUpRight size={16} />
-                    </a>
                   )}
                   <p className="awaiting-payment">
                     <LoaderCircle className="spin" size={15} /> Aguardando
