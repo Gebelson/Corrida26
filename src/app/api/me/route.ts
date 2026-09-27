@@ -12,7 +12,7 @@ export const GET = route(async (req) => {
     user,
     transactions: (
       await db.query(
-        "SELECT * FROM transactions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100",
+        "SELECT * FROM transactions WHERE user_id=$1 AND status='paid' ORDER BY created_at DESC LIMIT 100",
         [user.id],
       )
     ).rows.map(publicTransaction),
