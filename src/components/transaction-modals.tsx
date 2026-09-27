@@ -668,6 +668,17 @@ export function CheckoutModal({
                       </button>
                     </>
                   )}
+                  {transaction.paymentUrl && (
+                    <a
+                      className="button button-primary wide desktop-payment-link"
+                      href={transaction.paymentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ArrowUpRight size={16} />
+                      Abrir página do pagamento Pix
+                    </a>
+                  )}
                   {transaction.qrCode && (
                     <button
                       type="button"
