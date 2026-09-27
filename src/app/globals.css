@@ -2558,14 +2558,10 @@ svg {
     box-shadow: 0 10px 25px #ed30422b;
   }
   .pix-payment .mobile-bank-action {
-    display: flex;
-    color: #fff;
-    border-color: #20a778;
-    background: linear-gradient(135deg, #16815e, #0c6c50);
-    box-shadow: 0 10px 25px #0aa87325;
+    display: none;
   }
   .pix-payment .desktop-payment-link {
-    display: none;
+    display: flex;
   }
   .pix-payment .mobile-payment-notice {
     display: block;
