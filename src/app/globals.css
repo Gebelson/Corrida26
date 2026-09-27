@@ -1649,6 +1649,9 @@ svg {
 .mobile-payment-notice {
   display: none;
 }
+.pix-payment .desktop-payment-link {
+  margin-top: 16px;
+}
 .pix-payment > img {
   margin: 0 auto 18px;
   border: 12px solid white;
