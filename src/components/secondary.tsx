@@ -732,10 +732,12 @@ export function TransactionTable({
   transactions,
   candidates,
   onReverse,
+  emptyDescription = "Suas transações aparecerão aqui, incluindo pagamentos pendentes.",
 }: {
   transactions: Transaction[];
   candidates: Candidate[];
   onReverse?: (transaction: Transaction) => void;
+  emptyDescription?: string;
 }) {
   return transactions.length ? (
     <div className="sec-table-scroll">
@@ -804,7 +806,7 @@ export function TransactionTable({
     <div className="sec-empty">
       <History size={31} />
       <h3>Nenhuma participação por aqui ainda.</h3>
-      <p>Suas transações aparecerão aqui, incluindo pagamentos pendentes.</p>
+      <p>{emptyDescription}</p>
     </div>
   );
 }
@@ -837,7 +839,9 @@ export function AccountPage() {
     api<{ transactions: Transaction[] }>("/api/me")
       .then((r) => {
         if (active) {
-          setTransactions(r.transactions);
+          setTransactions(
+            r.transactions.filter((transaction) => transaction.status === "paid"),
+          );
           setError(null);
         }
       })
@@ -948,7 +952,7 @@ export function AccountPage() {
           <section className="sec-panel">
             <div className="sec-panel-title">
               <h2>MINHAS TRANSAÇÕES</h2>
-              <span>Registro da sua conta</span>
+              <span>Pagamentos confirmados</span>
             </div>
             {error && (
               <ErrorState error={error} retry={() => setRetry((v) => v + 1)} />
@@ -957,6 +961,7 @@ export function AccountPage() {
               <TransactionTable
                 transactions={transactions}
                 candidates={board?.candidates ?? []}
+                emptyDescription="Seus pagamentos confirmados aparecerão aqui."
               />
             ) : (
               !error && <LoadingState />
