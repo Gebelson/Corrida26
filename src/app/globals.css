@@ -1645,6 +1645,7 @@ svg {
   text-align: center;
 }
 .mobile-pix-guide,
+.mobile-bank-action,
 .mobile-payment-notice {
   display: none;
 }
