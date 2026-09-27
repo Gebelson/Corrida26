@@ -134,7 +134,29 @@ export function CheckoutModal({
     return copiedSuccessfully;
   }
 
-  async function openPixOnMobile(code: string, silent = false) {
+  async function pixQrFile(image?: string) {
+    if (!image || typeof File === "undefined") return null;
+    try {
+      const source = image.startsWith("data:")
+        ? image
+        : `data:image/png;base64,${image}`;
+      const response = await fetch(source);
+      const blob = await response.blob();
+      return new File(
+        [blob],
+        `pix-corrida26-${transaction?.id.slice(0, 8) || "pagamento"}.png`,
+        { type: blob.type || "image/png" },
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  async function openPixOnMobile(
+    code: string,
+    silent = false,
+    qrImage?: string,
+  ) {
     setPaymentNotice("");
     let copiedSuccessfully = false;
     let fallback: HTMLTextAreaElement | null = null;
@@ -163,10 +185,22 @@ export function CheckoutModal({
 
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: "Pagamento Pix",
-          text: code,
-        });
+        const qrFile = await pixQrFile(qrImage);
+        if (
+          qrFile &&
+          navigator.canShare?.({ files: [qrFile] })
+        ) {
+          await navigator.share({
+            title: "Pagamento Pix",
+            text: "QR Code Pix da sua participação no CORRIDA 26.",
+            files: [qrFile],
+          });
+        } else {
+          await navigator.share({
+            title: "Pagamento Pix",
+            text: code,
+          });
+        }
         return;
       } catch {
         // O compartilhamento foi cancelado ou recusado pelo navegador.
@@ -175,14 +209,18 @@ export function CheckoutModal({
 
     if (copiedSuccessfully) {
       setPaymentNotice(
-        "Pix copiado. Abra seu banco e cole o código para pagar.",
+        "Pix copiado. Se o banco não aparecer, abra o app e cole o código para pagar.",
       );
     } else if (!silent) {
       setError("Toque e segure o código Pix acima para copiá-lo.");
     }
   }
 
-  async function startBankPayment(participantId: string, code: string) {
+  async function startBankPayment(
+    participantId: string,
+    code: string,
+    qrImage?: string,
+  ) {
     if (!transaction) return;
     setBankBusy(true);
     setError("");
@@ -205,7 +243,7 @@ export function CheckoutModal({
       window.location.assign(target.href);
     } catch {
       setBankPicker(false);
-      await openPixOnMobile(code, true);
+      await openPixOnMobile(code, true, qrImage);
       setPaymentNotice(
         "Não foi possível abrir o banco. Pix copiado — abra seu banco e cole o código para pagar.",
       );
@@ -214,7 +252,7 @@ export function CheckoutModal({
     }
   }
 
-  async function openPixInBank(code: string) {
+  async function openPixInBank(code: string, qrImage?: string) {
     setBankBusy(true);
     setError("");
     setPaymentNotice("");
@@ -234,13 +272,13 @@ export function CheckoutModal({
       }
       if (remembered && result.participants.some((item) => item.id === remembered)) {
         setBankBusy(false);
-        await startBankPayment(remembered, code);
+        await startBankPayment(remembered, code, qrImage);
         return;
       }
       setBankPicker(true);
       setPaymentNotice("Escolha seu banco para continuar com o valor já preenchido.");
     } catch {
-      await openPixOnMobile(code, true);
+      await openPixOnMobile(code, true, qrImage);
       setPaymentNotice(
         "Pix copiado. Abra seu banco e cole o código para pagar.",
       );
@@ -587,6 +625,7 @@ export function CheckoutModal({
                                     void startBankPayment(
                                       event.target.value,
                                       transaction.qrCode!,
+                                      transaction.qrImage,
                                     );
                                 }}
                               >
@@ -634,7 +673,12 @@ export function CheckoutModal({
                       type="button"
                       className="button button-primary wide mobile-bank-action"
                       disabled={bankBusy}
-                      onClick={() => void openPixInBank(transaction.qrCode!)}
+                      onClick={() =>
+                        void openPixInBank(
+                          transaction.qrCode!,
+                          transaction.qrImage,
+                        )
+                      }
                     >
                       {bankBusy ? (
                         <LoaderCircle className="spin" size={16} />
