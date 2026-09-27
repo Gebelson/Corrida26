@@ -1680,6 +1680,30 @@ svg {
   gap: 7px;
   align-items: center;
 }
+.checkout-auth-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 8px 8px;
+  text-align: center;
+}
+.checkout-auth-required .login-icon {
+  margin-bottom: 16px;
+}
+.checkout-auth-required h3 {
+  margin: 11px 0 9px;
+  font-size: 30px;
+  letter-spacing: 0.2px;
+}
+.checkout-auth-required > p {
+  max-width: 360px;
+  color: #96a8c2;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.checkout-auth-required .button {
+  margin-top: 22px;
+}
 .login-icon {
   width: 53px;
   height: 53px;
