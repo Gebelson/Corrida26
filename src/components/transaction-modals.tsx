@@ -375,6 +375,25 @@ export function CheckoutModal({
               : "Cada R$ 1 corresponde a 1 ponto simbólico dentro do jogo."}
           </Dialog.Description>
           {!transaction ? (
+            !user || user.anonymous ? (
+              <div className="checkout-auth-required">
+                <div className="login-icon">
+                  <UserRound size={24} />
+                </div>
+                <span className="eyebrow">CONTA NECESSÁRIA</span>
+                <h3>CADASTRE-SE PARA PARTICIPAR.</h3>
+                <p>
+                  Crie sua conta ou entre para gerar o pagamento Pix e
+                  acompanhar seu histórico com segurança.
+                </p>
+                <button
+                  className="button button-primary wide"
+                  onClick={openLogin}
+                >
+                  <UserRound size={17} /> Criar conta ou entrar
+                </button>
+              </div>
+            ) : (
             <>
               <div className="checkout-target">
                 <span
@@ -526,6 +545,7 @@ export function CheckoutModal({
                 com candidato ou campanha.
               </p>
             </>
+            )
           ) : paid ? (
             <div className="payment-success">
               <CheckCircle2 size={56} />
