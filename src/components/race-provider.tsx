@@ -60,7 +60,13 @@ export function RaceProvider({ children }: { children: ReactNode }) {
   const supabase = getAuth();
   const api = useCallback(
     async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
-      const client = getAuth();
+      const publicRead =
+        !options.method || options.method.toUpperCase() === "GET"
+          ? ["/api/board", "/api/session", "/api/history"].some(
+              (path) => url === path || url.startsWith(`${path}?`),
+            )
+          : false;
+      const client = publicRead ? null : getAuth();
       let session = null;
       if (client) {
         try {
