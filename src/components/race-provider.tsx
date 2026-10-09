@@ -61,9 +61,17 @@ export function RaceProvider({ children }: { children: ReactNode }) {
   const api = useCallback(
     async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
       const client = getAuth();
-      const session = client
-        ? (await client.auth.getSession()).data.session
-        : null;
+      let session = null;
+      if (client) {
+        try {
+          session = (await client.auth.getSession()).data.session;
+        } catch (error) {
+          console.warn(
+            "Supabase authentication is unavailable; continuing anonymously.",
+            error,
+          );
+        }
+      }
       const headers = new Headers(options.headers);
       if (options.body) headers.set("Content-Type", "application/json");
       if (session)
